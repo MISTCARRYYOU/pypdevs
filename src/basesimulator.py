@@ -1013,7 +1013,7 @@ class BaseSimulator(Solver):
         self.performActions()
         # Wait for the determined period of time
         currentRTTime = (time.time() - self.rt_zerotime)
-        self.asynchronousGenerator.checkInterrupt(currentRTTime * self.realtimeScale)
+        self.asynchronousGenerator.checkInterrupt(currentRTTime / self.realtimeScale)
         nextSimTime = min(self.model.timeNext[0], self.termination_time[0], self.asynchronousGenerator.getNextTime()) * self.realtimeScale
 
         # Subtract the time that we already did our computation
