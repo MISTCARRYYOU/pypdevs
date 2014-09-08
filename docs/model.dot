@@ -1,0 +1,17 @@
+digraph G {
+  subgraph "clusterCQueue" {
+  label = "CQueue"
+  color=black
+  "CQueue.Generator" [
+    label = "Generator\nState: True"
+    color="red"
+    style=filled
+]
+  "CQueue.Queue" [
+    label = "Queue\nState: None"
+    color="red"
+    style=filled
+]
+  }
+  "CQueue.Generator" -> "CQueue.Queue" [label="outport -> input"];
+}
