@@ -14,13 +14,13 @@ class ThreadingBackend(object):
         self.interruptedValue = None
         self.valueLock = threading.Lock()
         if subsystem == "python":
-            from pypdevs.threadingPython import ThreadingPython
+            from pypdevs.realtime.threadingPython import ThreadingPython
             self.subsystem = ThreadingPython(*args)
         elif subsystem == "tkinter":
-            from pypdevs.threadingTkInter import ThreadingTkInter
+            from pypdevs.realtime.threadingTkInter import ThreadingTkInter
             self.subsystem = ThreadingTkInter(*args)
         elif subsystem == "loop":
-            from pypdevs.threadingGameLoop import ThreadingGameLoop
+            from pypdevs.realtime.threadingGameLoop import ThreadingGameLoop
             self.subsystem = ThreadingGameLoop(*args)
         else:
             raise Exception("Realtime subsystem not found: " + str(subsystem))

@@ -99,7 +99,7 @@ class SimulatorConfiguration(object):
         if destination not in range(self.simulator.server.size):
             raise DEVSException("Relocation directive got an unknown destination, got: %s, expected one of %s" % (destination, range(self.simulator.server.size)))
 
-        from pypdevs.manualRelocator import ManualRelocator
+        from pypdevs.relocators.manualRelocator import ManualRelocator
         if not isinstance(self.simulator.activityRelocator, ManualRelocator):
             raise DEVSException("Relocation directives can only be set when using a manual relocator (the default)\nYou seem to have changed the relocator, so please revert it back by calling the 'setManualRelocator()' first!")
 
@@ -639,7 +639,7 @@ class SimulatorConfiguration(object):
         :param args: all other args are passed to the constructor
         """
         try:
-            exec("from pypdevs.%s import %s" % (filename, classname))
+            exec("from pypdevs.relocators.%s import %s" % (filename, classname))
         except:
             exec("from %s import %s" % (filename, classname))
         self.simulator.activityRelocator = eval("%s(*args)" % classname)
@@ -658,7 +658,7 @@ class SimulatorConfiguration(object):
         """
         Sets the use of the greedy allocator that is contained in the standard PyPDEVS distribution.
         """
-        from pypdevs.greedyAllocator import GreedyAllocator
+        from pypdevs.relocators.greedyAllocator import GreedyAllocator
         self.setInitialAllocator(GreedyAllocator())
 
     def setAutoAllocator(self):
@@ -666,7 +666,7 @@ class SimulatorConfiguration(object):
         Sets the use of an initial allocator that simply distributes the root models.
         This is a static allocator, meaning that no event activity will be generated.
         """
-        from pypdevs.autoAllocator import AutoAllocator
+        from pypdevs.relocators.autoAllocator import AutoAllocator
         self.setInitialAllocator(AutoAllocator())
 
     def setInitialAllocator(self, allocator):

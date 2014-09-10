@@ -6,6 +6,6 @@ setup(name="PyPDEVS",
       author="Yentl Van Tendeloo",
       author_email="yentl.vantendeloo@student.uantwerpen.be",
       url="http://msdl.cs.mcgill.ca/people/yentl",
-      packages=['pypdevs'],
+      packages=['pypdevs', 'pypdevs.allocators', 'pypdevs.realtime', 'pypdevs.relocators', 'pypdevs.schedulers', 'pypdevs.templates', 'pypdevs.tracers'],
       package_dir={'': '${CMAKE_CURRENT_SOURCE_DIR}'}
 )

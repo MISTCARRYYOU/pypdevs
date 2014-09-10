@@ -14,7 +14,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-from pypdevs.tracers import Tracers
+from pypdevs.tracer import Tracers
 from pypdevs.activityVisualisation import *
 from collections import defaultdict
 import time
@@ -963,7 +963,7 @@ class BaseSimulator(Solver):
         self.nextLP = self.getProxy((self.name + 1) % kernels)
         self.irreversible = self.kernels == 1
         self.temporaryIrreversible = self.irreversible
-        from statesavers import DeepCopyState, PickleZeroState, PickleHighestState, CopyState, AssignState, CustomState, MarshalState
+        from pypdevs.statesavers import DeepCopyState, PickleZeroState, PickleHighestState, CopyState, AssignState, CustomState, MarshalState
         state_saving_options = {0: DeepCopyState, 1: PickleZeroState, 2: PickleHighestState, 3: CopyState, 4: AssignState, 5: CustomState, 6: MarshalState}
         self.state_saver = state_saving_options[statesaver]
         # Save the integer value for checkpointing

@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (PyPDEVS)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+set(PACKAGE_VERSION "2.2.3")
 find_package(PythonInterp REQUIRED)
 find_package(Sphinx REQUIRED)
 

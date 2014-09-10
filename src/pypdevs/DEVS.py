@@ -718,7 +718,7 @@ class RootDEVS(BaseDEVS):
         """
         if isinstance(schedulerType, tuple):
             try:
-                exec("from pypdevs.%s import %s" % schedulerType)
+                exec("from pypdevs.schedulers.%s import %s" % schedulerType)
             except:
                 exec("from %s import %s" % schedulerType)
             nrmodels = len(self.models)

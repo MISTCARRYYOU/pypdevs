@@ -1,4 +1,4 @@
-from pypdevs.boundaryRelocator import BoundaryRelocator
+from pypdevs.relocators.boundaryRelocator import BoundaryRelocator
 from heapq import heappop, heappush, heapify
 
 class BasicBoundaryRelocator(BoundaryRelocator):

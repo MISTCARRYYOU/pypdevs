@@ -181,7 +181,7 @@ class Simulator(object):
         self.activityVisualisation = False
         self.locationCellView = False
         self.sortOnActivity = False
-        from pypdevs.manualRelocator import ManualRelocator
+        from pypdevs.relocators.manualRelocator import ManualRelocator
         self.activityRelocator = ManualRelocator()
         self.dsdevs = False
         self.memoization = False

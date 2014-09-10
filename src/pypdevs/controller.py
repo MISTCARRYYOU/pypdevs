@@ -479,10 +479,10 @@ class Controller(BaseSimulator):
         :param args: additional arguments for the realtime backend
         """
         self.realtime = True
-        from pypdevs.threadingBackend import ThreadingBackend
+        from pypdevs.realtime.threadingBackend import ThreadingBackend
         self.threadingBackend = ThreadingBackend(subsystem, args)
         self.rt_zerotime = time.time()
-        from pypdevs.asynchronousComboGenerator import AsynchronousComboGenerator
+        from pypdevs.realtime.asynchronousComboGenerator import AsynchronousComboGenerator
         self.asynchronousGenerator = AsynchronousComboGenerator(generatorfile, self.threadingBackend)
         self.realtime_starttime = time.time()
         self.portmap = ports

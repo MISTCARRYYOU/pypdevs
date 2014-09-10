@@ -5,8 +5,8 @@ Automaticly polymorphic scheduler. It will automatically adapt to your schedulin
 .. warning:: Barely tested, certainly not with distribution and relocation!!! **Use with caution!!!***
 
 """
-from pypdevs.schedulerHS import SchedulerHS
-from pypdevs.schedulerML import SchedulerML
+from pypdevs.schedulers.schedulerHS import SchedulerHS
+from pypdevs.schedulers.schedulerML import SchedulerML
 
 class SchedulerAuto(object):
     """
