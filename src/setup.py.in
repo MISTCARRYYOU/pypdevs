@@ -1,0 +1,11 @@
+from distutils.core import setup
+
+setup(name="PyPDEVS",
+      version="${PACKAGE_VERSION}",
+      description="Python Parallel DEVS simulator",
+      author="Yentl Van Tendeloo",
+      author_email="yentl.vantendeloo@student.uantwerpen.be",
+      url="http://msdl.cs.mcgill.ca/people/yentl",
+      packages=['pypdevs'],
+      package_dir={'': '${CMAKE_CURRENT_SOURCE_DIR}'}
+)
