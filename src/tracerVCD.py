@@ -1,4 +1,4 @@
-from util import runTraceAtController, toStr, DEVSException
+from pypdevs.util import runTraceAtController, toStr, DEVSException
 from math import floor
 
 class VCDRecord(object):

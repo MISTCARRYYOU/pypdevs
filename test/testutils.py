@@ -1,16 +1,15 @@
 import os
 import sys
-sys.path.append('../src/')
 sys.path.append('testmodels')
-import middleware
+import pypdevs.middleware as middleware
 import unittest
 import logging
-from logger import setLogger
+from pypdevs.logger import setLogger
 setLogger('None', ('localhost', 514), logging.WARN)
-from controller import Controller
+from pypdevs.controller import Controller
 import threading
-from basesimulator import BaseSimulator
-from message import NetworkMessage
+from pypdevs.basesimulator import BaseSimulator
+from pypdevs.message import NetworkMessage
 from models import *
 from collections import defaultdict
 
@@ -20,7 +19,7 @@ class StubController(Controller):
         self.reverted = False
         # Just don't create an int, as this indicates remote locations
         self.destinations = defaultdict(lambda : None)
-        from manualRelocator import ManualRelocator
+        from pypdevs.manualRelocator import ManualRelocator
         self.relocator = ManualRelocator()
         self.initialAllocator = None
 

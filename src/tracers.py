@@ -18,7 +18,10 @@ class Tracers(object):
         :param server: the server object to be able to make remote calls
         :param recover: whether or not this is a recovered registration (used during checkpointing)
         """
-        exec("from %s import %s" % tracer[0:2])
+        try:
+            exec("from pypdevs.%s import %s" % tracer[0:2])
+        except:
+            exec("from %s import %s" % tracer[0:2])
         self.tracers.append(eval("%s(%i, server, *%s)" % (tracer[1], self.uid, tracer[2])))
         self.tracers_init.append(tracer)
         self.uid += 1

@@ -1,6 +1,6 @@
 from testutils import *
-from util import DEVSException
-from DEVS import BaseDEVS, AtomicDEVS, CoupledDEVS
+from pypdevs.util import DEVSException
+from pypdevs.DEVS import BaseDEVS, AtomicDEVS, CoupledDEVS
 
 class TestExceptions(unittest.TestCase):
     # Tests the externalInput function, which takes messages of the form:

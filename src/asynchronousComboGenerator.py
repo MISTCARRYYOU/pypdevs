@@ -2,7 +2,7 @@ import select
 import sys
 import threading
 import time
-from util import DEVSException
+from pypdevs.util import DEVSException
 
 class AsynchronousComboGenerator(object):
     """

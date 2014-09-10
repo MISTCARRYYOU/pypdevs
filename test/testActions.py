@@ -1,5 +1,5 @@
 from testutils import *
-from util import DEVSException
+from pypdevs.util import DEVSException
 
 class TestActions(unittest.TestCase):
     # Tests the externalInput function, which takes messages of the form:

@@ -3,13 +3,10 @@ try:
     from mpi4py import MPI
 except ImportError:
     pass
-#import stacktracer
-#stacktracer.trace_start("trace" + str(MPI.COMM_WORLD.Get_rank()) + ".html",interval=5,auto=True) # Set auto flag to always update file!
 
 import models
 import sys
-sys.path.append('../../src/')
-from simulator import Simulator, loadCheckpoint
+from pypdevs.simulator import Simulator, loadCheckpoint
 
 
 mn = sys.argv[1]

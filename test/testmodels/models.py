@@ -1,12 +1,8 @@
 import sys
 import os.path
 
-sys.path.append('../src/pypdevs')
-sys.path.append('../../src/')
-sys.path.append('../src/')
-sys.path.append('../pypdevs')
-from infinity import *
-from DEVS import AtomicDEVS, CoupledDEVS
+from pypdevs.infinity import *
+from pypdevs.DEVS import AtomicDEVS, CoupledDEVS
 
 class Event(object):
     def __init__(self, eventSize):
@@ -155,20 +151,13 @@ class NestedProcessor(Processor):
         return self.state
 
     def timeAdvance(self):
-        print("Importing")
-        from simulator import Simulator
-        print("Constructing")
+        from pypdevs.simulator import Simulator
         model = CoupledGenerator()
-        print("INIT")
         sim = Simulator(model)
-        print("CONFIG")
-        print("Termination time: " + str(self.state.processed))
         sim.setTerminationTime(self.state.processed)
         #sim.setVerbose(True)
         sim.simulate()
-        print("Ran: " + str(sim.model.generator.state.generated))
         result = max(sim.model.generator.state.generated, 1)
-        print("Got result " + str(result))
         return result
 
 class Generator(AtomicDEVS):
@@ -727,7 +716,7 @@ class ClassicCoupled(CoupledDEVS):
 
 class RandomProcessorState(object):
     def __init__(self, seed):
-        from randomGenerator import RandomGenerator
+        from pypdevs.randomGenerator import RandomGenerator
         self.randomGenerator = RandomGenerator(seed)
         self.queue = []
         self.proctime = self.randomGenerator.uniform(0.3, 3.0)

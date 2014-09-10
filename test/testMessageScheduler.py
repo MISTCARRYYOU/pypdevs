@@ -1,5 +1,5 @@
 from testutils import *
-from messageScheduler import MessageScheduler
+from pypdevs.messageScheduler import MessageScheduler
 from copy import deepcopy
 
 class TestMessageScheduler(unittest.TestCase):

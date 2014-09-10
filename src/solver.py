@@ -5,12 +5,12 @@ The actual DEVS solvers containing the main DEVS implementation
 
 from collections import defaultdict
 
-from DEVS import *
+from pypdevs.DEVS import *
 
-from util import *
-from logger import *
+from pypdevs.util import *
+from pypdevs.logger import *
 
-from classicDEVSWrapper import ClassicDEVSWrapper
+from pypdevs.classicDEVSWrapper import ClassicDEVSWrapper
 
 class Solver(object):
     """

@@ -10,12 +10,10 @@
 
 # Add the directory where pydevs lives to Python's import path
 import sys
-import os.path
-sys.path.append(os.path.expanduser('../../src/'))
 
 # Import code for DEVS model representation:
-from infinity import *
-from DEVS import *
+from pypdevs.infinity import *
+from pypdevs.DEVS import *
 
 # Import for uniform random number generators 
 from random import uniform

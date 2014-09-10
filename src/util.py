@@ -2,8 +2,8 @@
 """
 Common utility functions used in PyPDEVS
 """
-import middleware
-from MPIRedirect import MPIRedirect
+import pypdevs.middleware as middleware
+from pypdevs.MPIRedirect import MPIRedirect
 from collections import defaultdict
 
 EPSILON = 1E-6

@@ -3,7 +3,7 @@
 Scheduler for external input messages
 """
 from heapq import heappop, heappush, heapify
-from logger import *
+from pypdevs.logger import *
 
 class MessageScheduler(object):
     """

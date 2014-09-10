@@ -2,20 +2,20 @@
 """
 Actual simulation kernel
 """
-from solver import Solver
+from pypdevs.solver import Solver
 
-from util import *
-from messageScheduler import MessageScheduler
-from message import NetworkMessage
-from DEVS import RootDEVS, CoupledDEVS, AtomicDEVS
+from pypdevs.util import *
+from pypdevs.messageScheduler import MessageScheduler
+from pypdevs.message import NetworkMessage
+from pypdevs.DEVS import RootDEVS, CoupledDEVS, AtomicDEVS
 import threading
-from logger import *
+from pypdevs.logger import *
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-from tracers import Tracers
-from activityVisualisation import *
+from pypdevs.tracers import Tracers
+from pypdevs.activityVisualisation import *
 from collections import defaultdict
 import time
 
@@ -1224,12 +1224,6 @@ class BaseSimulator(Solver):
     def simulate(self):
         """
         Simulate at this kernel
-        """
-        """
-        import cProfile
-        cProfile.runctx("self.simulate_profile()", globals(), locals())
-    
-    def simulate_profile(self):
         """
         import thread
         hadLock = not self.simlock.acquire(False)

@@ -17,7 +17,7 @@ The main advantage over the Activity Heap is that it never gets dirty and thus d
 This scheduler is ideal in situations where most transitions happen at exactly the same time, as we can then profit from the internal structure and simply return the mapped elements. It results in sufficient efficiency in most other cases, mainly due to the code base being a lot smaller then the Activity Heap.
 """
 from heapq import heappush, heappop
-from logger import *
+from pypdevs.logger import *
 
 class SchedulerHS(object):
     """

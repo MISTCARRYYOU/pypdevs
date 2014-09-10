@@ -1,12 +1,12 @@
 """
 Controller used as a specific simulation kernel
 """
-from basesimulator import BaseSimulator
-from logger import *
+from pypdevs.basesimulator import BaseSimulator
+from pypdevs.logger import *
 import threading
 import time
-import middleware
-from DEVS import CoupledDEVS, AtomicDEVS
+import pypdevs.middleware as middleware
+from pypdevs.DEVS import CoupledDEVS, AtomicDEVS
 
 class Controller(BaseSimulator):
     """
@@ -156,7 +156,7 @@ class Controller(BaseSimulator):
         self.checkForTemporaryIrreversible()
         self.noFinishRing.release()
         if self.locationCellView:
-            from activityVisualisation import visualizeLocations
+            from pypdevs.activityVisualisation import visualizeLocations
             visualizeLocations(self)
         # Call superclass (the actual simulation)
         BaseSimulator.simulate(self)
@@ -194,7 +194,7 @@ class Controller(BaseSimulator):
                 self.graph = None
                 self.allocations = None
             else:
-                from util import constructGraph, saveLocations
+                from pypdevs.util import constructGraph, saveLocations
                 self.graph = constructGraph(self.model)
                 self.allocations = self.initialAllocator.allocate(self.model.componentSet, self.getEventGraph(), self.kernels, self.totalActivities)
                 self.initialAllocator = None
@@ -479,10 +479,10 @@ class Controller(BaseSimulator):
         :param args: additional arguments for the realtime backend
         """
         self.realtime = True
-        from threadingBackend import ThreadingBackend
+        from pypdevs.threadingBackend import ThreadingBackend
         self.threadingBackend = ThreadingBackend(subsystem, args)
         self.rt_zerotime = time.time()
-        from asynchronousComboGenerator import AsynchronousComboGenerator
+        from pypdevs.asynchronousComboGenerator import AsynchronousComboGenerator
         self.asynchronousGenerator = AsynchronousComboGenerator(generatorfile, self.threadingBackend)
         self.realtime_starttime = time.time()
         self.portmap = ports

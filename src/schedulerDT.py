@@ -5,7 +5,7 @@
 This scheduler will only work if all models are scheduled at exactly the same time, or are not scheduled at all (scheduling at infinity is allowed though).
 """
 from heapq import heappush, heappop
-from logger import *
+from pypdevs.logger import *
 
 class SchedulerDT(object):
     """

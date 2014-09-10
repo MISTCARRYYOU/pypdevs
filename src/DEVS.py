@@ -3,8 +3,8 @@
 Classes and tools for DEVS model specification
 """
 
-from logger import debug, warn, info, error
-from util import *
+from pypdevs.logger import debug, warn, info, error
+from pypdevs.util import *
 import time
 
 class BaseDEVS(object):
@@ -717,7 +717,10 @@ class RootDEVS(BaseDEVS):
         :param schedulerType: type of scheduler to use (string representation)
         """
         if isinstance(schedulerType, tuple):
-            exec("from %s import %s" % schedulerType)
+            try:
+                exec("from pypdevs.%s import %s" % schedulerType)
+            except:
+                exec("from %s import %s" % schedulerType)
             nrmodels = len(self.models)
             self.scheduler = eval("%s(self.componentSet, EPSILON, nrmodels)" % schedulerType[1])
         else:

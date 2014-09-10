@@ -1,7 +1,7 @@
 from testutils import *
-from basesimulator import BaseSimulator
-from util import DEVSException
-from DEVS import RootDEVS
+from pypdevs.basesimulator import BaseSimulator
+from pypdevs.util import DEVSException
+from pypdevs.DEVS import RootDEVS
 
 class StubBaseSimulator(BaseSimulator):
     def __init__(self, name):
@@ -106,7 +106,7 @@ class TestGVT(unittest.TestCase):
     def test_setGVT(self):
         self.sim.GVT = 0
         models = [Generator()]
-        from statesavers import CopyState
+        from pypdevs.statesavers import CopyState
         models[0].oldStates = [CopyState((0, 1), (2, 1), None, 0, {}, 0), CopyState((2, 1), (6, 1), None, 0, {}, 0)]
         self.sim.model = StubRootDEVS(models, 0)
         # Prevent a loop

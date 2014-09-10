@@ -1,5 +1,5 @@
 from testutils import *
-import logger
+import pypdevs.logger as logger
 
 class StubLogger(object):
     def __init__(self):

@@ -1,4 +1,4 @@
-from util import runTraceAtController, toStr
+from pypdevs.util import runTraceAtController, toStr
 import sys
 
 class TracerXML(object):

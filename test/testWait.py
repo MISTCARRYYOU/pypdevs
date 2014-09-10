@@ -1,5 +1,5 @@
 from testutils import *
-from basesimulator import BaseSimulator
+from pypdevs.basesimulator import BaseSimulator
 
 class TestWait(unittest.TestCase):
     def setUp(self):

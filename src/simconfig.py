@@ -1,9 +1,9 @@
 """
 Module with the specific aim of creating a more simple configuration interface for the simulator.
 """
-import middleware
-from util import DEVSException
-from DEVS import CoupledDEVS, AtomicDEVS
+import pypdevs.middleware as middleware
+from pypdevs.util import DEVSException
+from pypdevs.DEVS import CoupledDEVS, AtomicDEVS
 
 def local(sim):
     """
@@ -99,7 +99,7 @@ class SimulatorConfiguration(object):
         if destination not in range(self.simulator.server.size):
             raise DEVSException("Relocation directive got an unknown destination, got: %s, expected one of %s" % (destination, range(self.simulator.server.size)))
 
-        from manualRelocator import ManualRelocator
+        from pypdevs.manualRelocator import ManualRelocator
         if not isinstance(self.simulator.activityRelocator, ManualRelocator):
             raise DEVSException("Relocation directives can only be set when using a manual relocator (the default)\nYou seem to have changed the relocator, so please revert it back by calling the 'setManualRelocator()' first!")
 
@@ -638,7 +638,10 @@ class SimulatorConfiguration(object):
         :param classname: classname of the relocator
         :param args: all other args are passed to the constructor
         """
-        exec("from %s import %s" % (filename, classname))
+        try:
+            exec("from pypdevs.%s import %s" % (filename, classname))
+        except:
+            exec("from %s import %s" % (filename, classname))
         self.simulator.activityRelocator = eval("%s(*args)" % classname)
 
     def setActivityRelocatorBasicBoundary(self, swappiness):
@@ -655,7 +658,7 @@ class SimulatorConfiguration(object):
         """
         Sets the use of the greedy allocator that is contained in the standard PyPDEVS distribution.
         """
-        from greedyAllocator import GreedyAllocator
+        from pypdevs.greedyAllocator import GreedyAllocator
         self.setInitialAllocator(GreedyAllocator())
 
     def setAutoAllocator(self):
@@ -663,7 +666,7 @@ class SimulatorConfiguration(object):
         Sets the use of an initial allocator that simply distributes the root models.
         This is a static allocator, meaning that no event activity will be generated.
         """
-        from autoAllocator import AutoAllocator
+        from pypdevs.autoAllocator import AutoAllocator
         self.setInitialAllocator(AutoAllocator())
 
     def setInitialAllocator(self, allocator):

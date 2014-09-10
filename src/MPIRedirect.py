@@ -4,7 +4,7 @@ Class containing a kind of RMI implementation over MPI.
 
 oneways = frozenset(["simulate", "receiveControl", "receive", "finishSimulation", "notifyWait", "notifyRun", "prepare", "receiveAntiMessages", "migrationUnlock", "notifyMigration", "requestMigrationLock", "setGVT"])
 
-import middleware
+import pypdevs.middleware as middleware
 import exceptions
 
 class MPIFaker(object):
@@ -37,7 +37,7 @@ except ImportError:
     COMM_WORLD = MPIFaker()
 
 import threading
-from logger import *
+from pypdevs.logger import *
 
 def cleaning():
     """

@@ -3,7 +3,7 @@
 Main simulator class to be used as an interface to the user
 """
 
-import middleware
+import pypdevs.middleware as middleware
 
 # Fetch the rank and size of this simulation run
 # Don't get it ourself (e.g. from MPI), as we are possibly not using MPI
@@ -11,13 +11,13 @@ nested = False
 wasMain = False
 rank, size = middleware.startupMiddleware()
 
-from util import *
-from DEVS import *
-from basesimulator import *
+from pypdevs.util import *
+from pypdevs.DEVS import *
+from pypdevs.basesimulator import *
 
-from server import *
+from pypdevs.server import *
 
-from logger import *
+from pypdevs.logger import *
 
 import threading
 import time
@@ -84,7 +84,7 @@ def loadCheckpoint(name):
     foundGVTs.sort()
     gvt = 0
     # Construct a temporary server
-    from middleware import COMM_WORLD
+    from pypdevs.middleware import COMM_WORLD
     server = Server(middleware.COMM_WORLD.Get_rank(), middleware.COMM_WORLD.Get_size())
     while len(foundGVTs) > 0:
         gvt = foundGVTs[-1]
@@ -127,10 +127,10 @@ class Simulator(object):
 
         :param model: a valid model (created with the provided functions)
         """
-        from simconfig import SimulatorConfiguration
+        from pypdevs.simconfig import SimulatorConfiguration
         self.config = SimulatorConfiguration(self)
 
-        from middleware import COMM_WORLD
+        from pypdevs.middleware import COMM_WORLD
         # Simulator is always started at the controller
         self.server = Server(0, size)
 
@@ -181,7 +181,7 @@ class Simulator(object):
         self.activityVisualisation = False
         self.locationCellView = False
         self.sortOnActivity = False
-        from manualRelocator import ManualRelocator
+        from pypdevs.manualRelocator import ManualRelocator
         self.activityRelocator = ManualRelocator()
         self.dsdevs = False
         self.memoization = False
@@ -286,7 +286,7 @@ class Simulator(object):
         :param outfile: a file handle to write text to
         :param model: the model to draw
         """
-        from colors import colors
+        from pypdevs.colors import colors
         if isinstance(model, CoupledDEVS):
             outfile.write('  subgraph "cluster%s" {\n' % (model.getModelFullName()))
             outfile.write('  label = "%s"\n' % model.getModelName())

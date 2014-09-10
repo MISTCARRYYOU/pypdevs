@@ -1,5 +1,5 @@
 from testutils import *
-from util import *
+from pypdevs.util import *
 
 class TestHelpers(unittest.TestCase):
     # Tests the externalInput function, which takes messages of the form:

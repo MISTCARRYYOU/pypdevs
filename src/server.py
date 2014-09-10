@@ -2,15 +2,15 @@
 """
 Server for DEVS simulation
 """
-from basesimulator import BaseSimulator
-from controller import Controller
-import middleware
-from threadpool import ThreadPool
+from pypdevs.basesimulator import BaseSimulator
+from pypdevs.controller import Controller
+import pypdevs.middleware as middleware
+from pypdevs.threadpool import ThreadPool
 import threading
 
 import sys
-from util import *
-from logger import *
+from pypdevs.util import *
+from pypdevs.logger import *
 
 class Server(object):
     """
@@ -30,7 +30,7 @@ class Server(object):
         self.kernel = None
         self.size = totalSize
         self.proxies = [MPIRedirect(i) for i in range(totalSize)]
-        from MPIRedirect import LocalRedirect
+        from pypdevs.MPIRedirect import LocalRedirect
         self.proxies[name] = LocalRedirect(self)
         self.queuedMessages = []
         self.queuedTime = None
@@ -83,7 +83,7 @@ class Server(object):
         infile = open("%s_%s_%s.pdc" % (name, gvt, rank), 'r')
         self.kernel = pickle.load(infile)
         self.kernel.server = self
-        from MPIRedirect import LocalRedirect
+        from pypdevs.MPIRedirect import LocalRedirect
         self.proxies[self.name] = LocalRedirect(self)
         infile.close()
         #assert debug("Closing file")

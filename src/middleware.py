@@ -22,7 +22,7 @@ def startupMiddleware():
         COMM_WORLD = MPI.COMM_WORLD
     except ImportError:
         # No MPI4Py found, so force local MPI simulation
-        from MPIRedirect import MPIFaker
+        from pypdevs.MPIRedirect import MPIFaker
         COMM_WORLD = MPIFaker()
 
     # Now we should take care of the starting of the server
@@ -30,7 +30,7 @@ def startupMiddleware():
     if rank != 0:
         # We should stop immediately, to prevent multiple constructions of the model
         # This is a 'good' stop, so return with a zero
-        from server import Server
+        from pypdevs.server import Server
         server = Server(int(rank), COMM_WORLD.Get_size())
         sys.exit(0)
     else:

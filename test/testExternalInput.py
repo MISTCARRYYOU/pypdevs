@@ -1,5 +1,5 @@
 from testutils import *
-from util import DEVSException
+from pypdevs.util import DEVSException
 
 class TestExternalInput(unittest.TestCase):
     def setUp(self):

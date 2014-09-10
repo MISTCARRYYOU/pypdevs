@@ -1,4 +1,4 @@
-from util import runTraceAtController
+from pypdevs.util import runTraceAtController
 import sys
 
 class TracerVerbose(object):

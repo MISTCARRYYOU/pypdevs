@@ -4,7 +4,7 @@ The Sorted List scheduler is the simplest scheduler available, though it has ext
 
 It simply keeps a list of all models, which is sorted on timeNext. No operations have any influence on this heap itself, as there is no real internal representation. As soon as the imminent models are requested, this list is sorted again and the first elements are returned.
 """
-from logger import *
+from pypdevs.logger import *
 
 class SchedulerSL(object):
     """

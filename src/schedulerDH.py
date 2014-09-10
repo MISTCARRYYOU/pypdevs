@@ -36,7 +36,7 @@ to restructure the heap.
 Reimplementing these methods in pure Python would be unnecessarily slow.
 """
 from heapq import heappush, heappop
-from logger import debug
+from pypdevs.logger import debug
 
 class SchedulerDH(object):
     """

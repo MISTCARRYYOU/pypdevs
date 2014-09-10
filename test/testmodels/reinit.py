@@ -3,13 +3,10 @@ import time
 start = time.clock()
 print("Starting at time " + str(start))
 from mpi4py import MPI
-#import stacktracer
-#stacktracer.trace_start("trace" + str(MPI.COMM_WORLD.Get_rank()) + ".html",interval=5,auto=True) # Set auto flag to always update file!
 
 import models
 import sys
-sys.path.append('../../src/')
-from simulator import Simulator, loadCheckpoint
+from pypdevs.simulator import Simulator, loadCheckpoint
 
 model = models.AutoDistChain(3, totalAtomics=500, iterations=1)
 

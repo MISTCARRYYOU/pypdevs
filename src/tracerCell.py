@@ -1,5 +1,5 @@
-from util import runTraceAtController, toStr
-from activityVisualisation import visualizeMatrix
+from pypdevs.util import runTraceAtController, toStr
+from pypdevs.activityVisualisation import visualizeMatrix
 import sys
 
 class TracerCell(object):

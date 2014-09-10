@@ -27,7 +27,7 @@ def visualizeActivity(sim):
     """
     activities = []
     cached = {}
-    import middleware
+    import pypdevs.middleware as middleware
     for i in range(len(sim.server.proxies)):
         cached.update(sim.controller.getProxy(i).getTotalActivity((float('inf'), float('inf'))))
     for aDEVS in sim.model.componentSet:
