@@ -1,11 +1,8 @@
 import sys
 
-# TODO replace this with your PyPDEVS src folder
-sys.path.append("/home/yentl/UA/DEVS/src")
-
-from DEVS import AtomicDEVS, CoupledDEVS
-from simulator import Simulator
-from infinity import INFINITY
+from pypdevs.DEVS import AtomicDEVS, CoupledDEVS
+from pypdevs.simulator import Simulator
+from pypdevs.infinity import INFINITY
 
 class Generator(AtomicDEVS):
     def __init__(self):

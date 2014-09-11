@@ -8,38 +8,7 @@ Other problems are often caused due to an ommission of the modeller. This sectio
 ImportError: No module named X
 ------------------------------
 
-This indicates that PyPDEVS isn't imported correctly. While this is actually just a Python error, it is still handled here as this is one of the most common questions.
-
-To import PyPDEVS, you need to do one of the following:
-
-* Extend your search path (recommended)
-* Set a PYTHONPATH environment variable
-* Put the *contents* of the *src* folder in the same folder as your model (**NOT** recommended)
-
-Assume you have the following directory structure::
-
-    PyPDEVS
-    |- src
-       |- basesimulator.py
-       |- colors.py
-       |- controller.py
-       |- ...
-    |- myExperiments
-       |- myModel.py
-       |- myExperiment.py
-
-In order to use the Python files from the *src* directory, it is necessary to extend your search path from the (default) *myExperiments* folder, to the *src* folder. This can be done using the syntax::
-
-    import sys
-    sys.path.append('../src/')
-
-Of course, this syntax assumes that you are running this from the *myExperiments* folder. Python will not complain on unknown paths, so you can add as many as you like for every possible situation that you want to call it. Another option (though less flexible) is to use an absolute path, for example::
-
-    import sys
-    sys.path.append('/home/user/PyPDEVS/src')
-
-.. note::
-   You should include the *src* folder and not simply the *PyPDEVS* folder!
+This indicates that PyPDEVS isn't imported correctly. Make sure that you have installed PyPDEVS, and all its dependencies, correctly.
 
 AttributeError: 'X' object has no attribute 'IPorts' (or 'OPorts' or 'componentSet')
 ------------------------------------------------------------------------------------
