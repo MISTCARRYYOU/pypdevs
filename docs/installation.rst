@@ -6,11 +6,19 @@ This section describes the necessary steps for installing PyPDEVS.
 Dependencies
 ------------
 
-Basic single core functionality of PyPDEVS requires only cmake. For parallel and distributed simulation, mpi4py is required too.
-Python 2.7 is always required, but this should be installed by default on most Linux distributions.
+The following dependencies are mandatory:
+- python 2.7
+- cmake
 
-Installation
-------------
+For parallel and distributed simulation, the following additional dependencies are required:
+- MPICH3 with socket device
+- mpi4py
+Installation instructions are given for these two dependencies further in this section.
+
+Realtime simulation using the Tk backend, obviously requires Tk.
+
+PyPDEVS Installation
+--------------------
 
 Installation of PyPDEVS is done using cmake and can be achieved with the following commands, executed from the root of the project::
 
@@ -26,12 +34,12 @@ Afterwards, PyPDEVS should be installed. This can easily be checked with the com
 
 If this returns without errors, PyPDEVS is sucessfully installed.
 
-Parallel and distributed simulation
------------------------------------
+Parallel and distributed simulation with mpi4py
+-----------------------------------------------
 
-This requires the installation of mpi4py, which can be quite involved.
+.. note:: You should be able to simply install mpi4py from your package repository, though this possibly results in suboptimal performance.
 
-First of, an MPI middleware has to be installed, for which I recommend MPICH3.
+First of all, an MPI middleware has to be installed, for which I recommend MPICH3.
 Due to some non-standard configuration options, it is required to install MPICH manually instead of using the one from the repositories.
 
 You can use either the official installation guide, or follow the steps below.
