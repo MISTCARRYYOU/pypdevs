@@ -40,9 +40,8 @@ class ThreadingBackend(object):
 
         :param value: the value that interrupts
         """
-        with self.valueLock:
-            self.interruptedValue = value
-            self.subsystem.interrupt()
+        self.interruptedValue = value
+        self.subsystem.interrupt()
 
     def setInterrupt(self, value):
         """
