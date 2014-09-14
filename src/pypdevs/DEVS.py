@@ -603,6 +603,7 @@ class CoupledDEVS(BaseDEVS):
             else:
                 ncon.append(p)
         p2.inLine = ncon
+        self.server.getSelfProxy().dsUndoDirectConnect()
 
     def connectPorts(self, p1, p2, z = None):
         """
@@ -658,6 +659,8 @@ class CoupledDEVS(BaseDEVS):
                                 p2.getPortName()))
 
         p1.zFunctions[p2] = z
+        if hasattr(self, "server"):
+            self.server.getSelfProxy().dsUndoDirectConnect()
 
     def setLocation(self, location, force=False):
         """

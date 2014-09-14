@@ -393,6 +393,12 @@ class Controller(BaseSimulator):
         """
         self.locked_kernels.add(remote)
 
+    def dsUndoDirectConnect(self):
+        """
+        Clear the direct connection cache
+        """
+        self.model.undoDirectConnect()
+
     def dsRemovePort(self, port):
         """
         Remove a port from the simulation
