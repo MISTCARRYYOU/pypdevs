@@ -658,7 +658,7 @@ class SimulatorConfiguration(object):
         """
         Sets the use of the greedy allocator that is contained in the standard PyPDEVS distribution.
         """
-        from pypdevs.relocators.greedyAllocator import GreedyAllocator
+        from pypdevs.allocators.greedyAllocator import GreedyAllocator
         self.setInitialAllocator(GreedyAllocator())
 
     def setAutoAllocator(self):
@@ -666,7 +666,7 @@ class SimulatorConfiguration(object):
         Sets the use of an initial allocator that simply distributes the root models.
         This is a static allocator, meaning that no event activity will be generated.
         """
-        from pypdevs.relocators.autoAllocator import AutoAllocator
+        from pypdevs.allocators.autoAllocator import AutoAllocator
         self.setInitialAllocator(AutoAllocator())
 
     def setInitialAllocator(self, allocator):

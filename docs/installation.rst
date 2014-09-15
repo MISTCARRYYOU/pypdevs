@@ -58,6 +58,7 @@ The following commands should work on most systems, just replace the '/home/you'
     make
     make install
     export PATH=$base/mpich/bin:$PATH
+    cd ../..
 
 You will probably want to put this final export of PATH to your .bashrc file, to make sure that mpi is found in new terminals too.
 After that, make sure that the following command does not cause any errors and simply prints your hostname 4 times::
@@ -71,10 +72,9 @@ Now you just need to install mpi4py, which is easy if you have MPICH installed c
     wget https://pypi.python.org/packages/source/m/mpi4py/mpi4py-1.3.1.tar.gz
     tar -xvzf mpi4py-1.3.1.tar.gz
     cd mpi4py-1.3.1
-    python setup.py build
+    python setup.py build --mpicc=../../mpich/bin/mpicc
     python setup.py install --user
-
-.. note:: Due to a bug in the mpi4py installation script, MPICH is sometimes not detected automatically. In this case, the 'build' command should be changed to: python setup.py build --mpicc=/location/of/mpich/bin/mpicc
+    cd ../..
 
 Testing whether or not everything works can be done by making sure that the following command does not throw an error::
 
