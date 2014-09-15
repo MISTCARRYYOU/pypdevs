@@ -1,5 +1,5 @@
 Asynchronous Combo Generator
 ============================
 
-.. autoclass:: asynchronousComboGenerator.AsynchronousComboGenerator
+.. autoclass:: realtime.asynchronousComboGenerator.AsynchronousComboGenerator
    :members:

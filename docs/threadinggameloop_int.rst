@@ -1,5 +1,5 @@
 Game Loop
 =========
 
-.. autoclass:: threadingGameLoop.ThreadingGameLoop
+.. autoclass:: realtime.threadingGameLoop.ThreadingGameLoop
     :members:

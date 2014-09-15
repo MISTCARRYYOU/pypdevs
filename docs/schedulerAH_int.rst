@@ -1,5 +1,5 @@
 Activity Heap scheduler
 =======================
 
-.. automodule:: schedulerAH
+.. automodule:: schedulers.schedulerAH
    :members:

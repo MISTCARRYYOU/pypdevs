@@ -1,5 +1,5 @@
 Tk Inter threading
 ==================
 
-.. autoclass:: threadingTkInter.ThreadingTkInter
+.. autoclass:: realtime.threadingTkInter.ThreadingTkInter
     :members:

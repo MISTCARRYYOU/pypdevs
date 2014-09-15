@@ -1,5 +1,5 @@
 Threading Backend
 =================
 
-.. autoclass:: threadingBackend.ThreadingBackend
+.. autoclass:: realtime.threadingBackend.ThreadingBackend
     :members:

@@ -1,5 +1,5 @@
 XML Tracer
 ==========
 
-.. autoclass:: tracerXML.TracerXML
+.. autoclass:: tracers.tracerXML.TracerXML
    :members:

@@ -1,5 +1,5 @@
 Greedy Allocator
 ================
 
-.. autoclass:: greedyAllocator.GreedyAllocator
+.. autoclass:: allocators.greedyAllocator.GreedyAllocator
    :members:

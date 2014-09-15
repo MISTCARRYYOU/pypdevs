@@ -1,5 +1,5 @@
 VCD Tracer
 ==========
 
-.. autoclass:: tracerVCD.TracerVCD
+.. autoclass:: tracers.tracerVCD.TracerVCD
    :members:

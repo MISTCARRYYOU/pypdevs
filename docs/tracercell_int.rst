@@ -1,5 +1,5 @@
 Cell Tracer
 ==============
 
-.. autoclass:: tracerCell.TracerCell
+.. autoclass:: tracers.tracerCell.TracerCell
    :members:

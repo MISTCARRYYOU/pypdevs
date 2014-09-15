@@ -1,5 +1,5 @@
 Boundary Relocator
 ==================
 
-.. automodule:: boundaryRelocator
+.. automodule:: relocators.boundaryRelocator
    :members:

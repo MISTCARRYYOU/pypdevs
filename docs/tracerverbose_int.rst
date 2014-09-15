@@ -1,5 +1,5 @@
 Verbose Tracer
 ==============
 
-.. autoclass:: tracerVerbose.TracerVerbose
+.. autoclass:: tracers.tracerVerbose.TracerVerbose
    :members:

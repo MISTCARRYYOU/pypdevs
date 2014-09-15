@@ -1,5 +1,5 @@
 No Age scheduler
 ================
 
-.. automodule:: schedulerNA
+.. automodule:: schedulers.schedulerNA
    :members:

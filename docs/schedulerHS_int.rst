@@ -1,5 +1,5 @@
 Heapset scheduler
 =================
 
-.. automodule:: schedulerHS
+.. automodule:: schedulers.schedulerHS
    :members:

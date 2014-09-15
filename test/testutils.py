@@ -19,7 +19,7 @@ class StubController(Controller):
         self.reverted = False
         # Just don't create an int, as this indicates remote locations
         self.destinations = defaultdict(lambda : None)
-        from pypdevs.manualRelocator import ManualRelocator
+        from pypdevs.relocators.manualRelocator import ManualRelocator
         self.relocator = ManualRelocator()
         self.initialAllocator = None
 

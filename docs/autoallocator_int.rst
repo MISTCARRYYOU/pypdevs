@@ -1,5 +1,5 @@
 AutoAllocator
 =============
 
-.. autoclass:: autoAllocator.AutoAllocator
+.. autoclass:: allocators.autoAllocator.AutoAllocator
    :members:

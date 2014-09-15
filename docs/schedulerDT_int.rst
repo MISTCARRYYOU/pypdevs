@@ -1,5 +1,5 @@
 'Discrete Time' scheduler
 =========================
 
-.. automodule:: schedulerDT
+.. automodule:: schedulers.schedulerDT
    :members:

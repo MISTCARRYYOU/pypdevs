@@ -1,5 +1,5 @@
 Polymorphic scheduler
 =====================
 
-.. automodule:: schedulerAuto
+.. automodule:: schedulers.schedulerAuto
    :members:

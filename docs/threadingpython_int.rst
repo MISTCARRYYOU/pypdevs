@@ -1,5 +1,5 @@
 Python threading
 ================
 
-.. autoclass:: threadingPython.ThreadingPython
+.. autoclass:: realtime.threadingPython.ThreadingPython
     :members:

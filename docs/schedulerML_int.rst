@@ -1,5 +1,5 @@
 Minimal List scheduler
 ======================
 
-.. automodule:: schedulerML
+.. automodule:: schedulers.schedulerML
    :members:

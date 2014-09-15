@@ -1,5 +1,5 @@
 from testutils import *
-from pypdevs.schedulerAH import SchedulerAH
+from pypdevs.schedulers.schedulerAH import SchedulerAH
 
 class TestScheduler(unittest.TestCase):
     def setUp(self):

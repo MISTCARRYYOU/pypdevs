@@ -1,5 +1,5 @@
 Manual Relocator
 ================
 
-.. automodule:: manualRelocator
+.. automodule:: relocators.manualRelocator
    :members:

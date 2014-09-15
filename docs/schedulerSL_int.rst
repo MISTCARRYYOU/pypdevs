@@ -1,5 +1,5 @@
 Sorted List scheduler
 =====================
 
-.. automodule:: schedulerSL
+.. automodule:: schedulers.schedulerSL
    :members:

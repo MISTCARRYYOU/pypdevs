@@ -1,5 +1,5 @@
 Dirty Heap scheduler
 =======================
 
-.. automodule:: schedulerDH
+.. automodule:: schedulers.schedulerDH
    :members:
