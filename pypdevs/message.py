@@ -22,12 +22,6 @@ class NetworkMessage(object):
         self.color = color
         self.destination = destination
 
-    def __str__(self):
-        """
-        String representation of the message
-        """
-        return "NetworkMessage:\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s" % (self.timestamp, self.content, self.uuid, self.color, self.destination)
-
     def __lt__(self, other):
         """
         Comparison of different NetworkMessages, necessary for Python3

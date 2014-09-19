@@ -46,7 +46,8 @@ class BoundaryRelocator(object):
             return self.model_activities[model.model_id]
         except KeyError:
             # 'Cache miss'
-            self.model_activities.update(self.server.getProxy(model.location).getCompleteActivity())
+            proxy = self.server.getProxy(model.location)
+            self.model_activities.update(proxy.getCompleteActivity())
             return self.model_activities[model.model_id]
 
     def constructBoundaries(self, models):
@@ -61,12 +62,14 @@ class BoundaryRelocator(object):
                 for port in iport.inLine:
                     if self.locations[port.hostDEVS.model_id] != location:
                         self.boundaries[location].setdefault(
-                                self.locations[port.hostDEVS.model_id], set()).add(model)
+                                self.locations[port.hostDEVS.model_id], 
+                                set()).add(model)
             for oport in model.OPorts:
                 for port, _ in oport.routingOutLine:
                     if self.locations[port.hostDEVS.model_id] != location:
                         self.boundaries[location].setdefault(
-                                self.locations[port.hostDEVS.model_id], set()).add(model)
+                                self.locations[port.hostDEVS.model_id], 
+                                set()).add(model)
 
     def removeBoundaries(self, models):
         """

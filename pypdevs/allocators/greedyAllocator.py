@@ -21,9 +21,10 @@ class GreedyAllocator(object):
         for source in edges:
             for destination in edges[source]:
                 # A connection from 'source' to 'destination'
-                nodes.setdefault(source, []).append((edges[source][destination], destination))
-                nodes.setdefault(destination, []).append((edges[source][destination], source))
-                remainingEdges.add((edges[source][destination], source, destination))
+                edge = edges[source][destination]
+                nodes.setdefault(source, []).append((edge, destination))
+                nodes.setdefault(destination, []).append((edge, source))
+                remainingEdges.add((edge, source, destination))
                 toAlloc.add(destination)
             toAlloc.add(source)
         # OK, nodes are constructed
@@ -32,7 +33,7 @@ class GreedyAllocator(object):
         nrnodes += 1
 
         # Find average activity (our target)
-        averageActivity = sum([totalActivities[i] for i in totalActivities])/nrnodes
+        avgActivity = sum([totalActivities[i] for i in totalActivities])/nrnodes
 
         # Get the strongest edge
         allocNode = 0
@@ -48,7 +49,9 @@ class GreedyAllocator(object):
                     break
             else:
                 break
-            nodeLoad.append(totalActivities[source.model_id] + totalActivities[destination.model_id])
+            activity_source = totalActivities[source.model_id]
+            activity_destination = totalActivities[destination.model_id]
+            nodeLoad.append(activity_source + activity_destination)
             allocation[source.model_id] = allocNode
             allocation[destination.model_id] = allocNode
             allocation_rev[allocNode].add(source)
@@ -56,7 +59,13 @@ class GreedyAllocator(object):
             toAlloc.remove(source)
             toAlloc.remove(destination)
             while nodeLoad[allocNode] < averageActivity:
-                edgeSearch = [edge for edge in remainingEdges if (edge[1] in allocation_rev[allocNode] and edge[2] in toAlloc) or (edge[2] in allocation_rev[allocNode] and edge[1] in toAlloc)]
+                edgeSearch = []
+                for edge in remainingEdges:
+                    if ((edge[1] in allocation_rev[allocNode] and
+                         edge[2] in toAlloc) or
+                        (edge[2] in allocation_rev[allocNode] and
+                         edge[1] in toAlloc)):
+                        edgeSearch.append(edge)
                 if not edgeSearch:
                     break
                 # Allocate some more nodes
@@ -85,12 +94,14 @@ class GreedyAllocator(object):
                 options = set()
                 for oport in model.OPorts:
                     for oline, _ in oport.routingOutLine:
+                        location = oline.hostDEVS.location
                         if oline.hostDEVS.location is not None:
-                            options.add((nodeLoad[oline.hostDEVS.location], oline.hostDEVS.location))
+                            options.add((nodeLoad[location], location))
                 for iport in model.IPorts:
                     for iline in oport.routingInLine:
+                        location = iline.hostDEVS.location
                         if iline.hostDEVS.location is not None:
-                            options.add((nodeLoad[iline.hostDEVS.location], iline.hostDEVS.location))
+                            options.add((nodeLoad[location], location))
                 if not options:
                     continue
                 # Get the best option
@@ -100,7 +111,7 @@ class GreedyAllocator(object):
                 allocation_rev[loc].add(model.model_id)
                 toAlloc.remove(model)
             if not changes:
-                # An iteration without changes, this means that we would loop forever
+                # An iteration without changes, means that we loop forever
                 for m in toAlloc:
                     # Force an allocation to 0
                     allocation[m.model_id] = 0

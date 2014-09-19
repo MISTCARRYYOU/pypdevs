@@ -9,6 +9,8 @@ import pypdevs.middleware as middleware
 from pypdevs.DEVS import CoupledDEVS, AtomicDEVS
 from pypdevs.util import DEVSException
 from pypdevs.activityVisualisation import visualizeLocations
+from pypdevs.realtime.threadingBackend import ThreadingBackend
+from pypdevs.realtime.asynchronousComboGenerator import AsynchronousComboGenerator
 
 class Controller(BaseSimulator):
     """
@@ -110,7 +112,8 @@ class Controller(BaseSimulator):
         # Start up the GVT algorithm then
         self.eventGVT = threading.Event()
         self.runGVT = True
-        self.gvtthread = threading.Thread(target=Controller.threadGVT, args=[self, GVT_interval])
+        self.gvtthread = threading.Thread(target=Controller.threadGVT, 
+                                          args=[self, GVT_interval])
         self.gvtthread.daemon = True
         self.gvtthread.start()
 
@@ -126,7 +129,11 @@ class Controller(BaseSimulator):
         # Maybe simulation already finished...
         while self.runGVT:
             #print("ACCUMULATOR: " + str(self.accumulator))
-            self.receiveControl([float('inf'), float('inf'), self.accumulator, {}], True)
+            self.receiveControl([float('inf'), 
+                                 float('inf'), 
+                                 self.accumulator, 
+                                 {}], 
+                                True)
             # Wait until the lock is released elsewhere
             self.waitForGVT.wait()
             self.waitForGVT.clear()
@@ -198,9 +205,15 @@ class Controller(BaseSimulator):
             else:
                 from pypdevs.util import constructGraph, saveLocations
                 self.graph = constructGraph(self.model)
-                self.allocations = self.initialAllocator.allocate(self.model.componentSet, self.getEventGraph(), self.kernels, self.totalActivities)
+                allocs = self.initialAllocator.allocate(self.model.componentSet,
+                                                        self.getEventGraph(),
+                                                        self.kernels,
+                                                        self.totalActivities)
+                self.allocations = allocs
                 self.initialAllocator = None
-                saveLocations("locationsave.txt", self.allocations, self.model_ids)
+                saveLocations("locationsave.txt", 
+                              self.allocations, 
+                              self.model_ids)
         return self.graph, self.allocations
 
     def setCellLocationTracer(self, x, y, locationCellView):
@@ -308,7 +321,10 @@ class Controller(BaseSimulator):
 
         :param relocate: dictionary containing the model_id as key and the value is the node to send it to
         """
-        relocate = {key: relocate[key] for key in relocate if self.model_ids[key].location != relocate[key] and self.model_ids[key].relocatable}
+        relocate = {key: relocate[key] 
+                for key in relocate 
+                if self.model_ids[key].location != relocate[key] and 
+                        self.model_ids[key].relocatable}
         if not relocate:
             return
 
@@ -343,7 +359,8 @@ class Controller(BaseSimulator):
             # Busy loop until everything is done
             # Don't use an iterator, as we will change the list
             for source, destination in relocation_rules.keys():
-                if source in self.locked_kernels and destination in self.locked_kernels:
+                if (source in self.locked_kernels and 
+                        destination in self.locked_kernels):
                     models = relocation_rules[(source, destination)]
                     self.getProxy(source).migrateTo(destination, models)
                     del relocation_rules[(source, destination)]
@@ -374,7 +391,10 @@ class Controller(BaseSimulator):
             # So disable it for now
             # This does offer a slight negative impact, though it isn't really worth fixing for the time being
             return
-        currentKernel = self.destinations[0] if isinstance(self.destinations[0], int) else 0
+        if isinstance(self.destinations[0], int):
+            currentKernel = self.destinations[0]
+        else:
+            currentKernel = 0
         for kernel in self.destinations:
             if isinstance(kernel, int):
                 loc = kernel
@@ -383,7 +403,7 @@ class Controller(BaseSimulator):
             if loc != currentKernel:
                 break
         else:
-            # We did'nt break, so one of the nodes runs all at once
+            # We didn't break, so one of the nodes runs all at once
             self.getProxy(currentKernel).setIrreversible()
             self.runningIrreversible = currentKernel
 
@@ -487,11 +507,10 @@ class Controller(BaseSimulator):
         :param args: additional arguments for the realtime backend
         """
         self.realtime = True
-        from pypdevs.realtime.threadingBackend import ThreadingBackend
         self.threadingBackend = ThreadingBackend(subsystem, args)
         self.rt_zerotime = time.time()
-        from pypdevs.realtime.asynchronousComboGenerator import AsynchronousComboGenerator
-        self.asynchronousGenerator = AsynchronousComboGenerator(generatorfile, self.threadingBackend)
+        async = AsynchronousComboGenerator(generatorfile, self.threadingBackend)
+        self.asynchronousGenerator = async
         self.realtime_starttime = time.time()
         self.portmap = ports
         self.realtimeScale = scale
@@ -519,5 +538,9 @@ class Controller(BaseSimulator):
         :param value: the new value of the variable
         """
         # Call the node that hosts this model and order it to recompute timeAdvance
-        self.getProxy(self.model_ids[model_id].location).recomputeTA(model_id, self.prev_termination_time)
-        self.tracers.tracesUser(self.prev_termination_time, self.model_ids[model_id], variable, value)
+        proxy = self.getProxy(self.model_ids[model_id].location)
+        proxy.recomputeTA(model_id, self.prev_termination_time)
+        self.tracers.tracesUser(self.prev_termination_time, 
+                                self.model_ids[model_id], 
+                                variable, 
+                                value)

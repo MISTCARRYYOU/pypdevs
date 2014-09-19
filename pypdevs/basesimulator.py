@@ -8,6 +8,7 @@ from pypdevs.util import *
 from pypdevs.messageScheduler import MessageScheduler
 from pypdevs.message import NetworkMessage
 from pypdevs.DEVS import RootDEVS, CoupledDEVS, AtomicDEVS
+from pypdevs.statesavers import *
 import threading
 from pypdevs.logger import *
 try:
@@ -77,7 +78,8 @@ class BaseSimulator(Solver):
         self.checkpoint_restored = False
         self.realtime = False
         self.reset = True
-        self.getProxy(self.name).saveAndProcessModel(self.pickledModel, scheduler)
+        proxy = self.getProxy(self.name)
+        proxy.saveAndProcessModel(self.pickledModel, scheduler)
 
     def __setstate__(self, retdict):
         """
@@ -97,17 +99,27 @@ class BaseSimulator(Solver):
         :returns: dictionary containing attributes and their values
         """
         retdict = {}
+        unpicklable = frozenset("instancemethod",
+                                "lock",
+                                "_Event",
+                                "Thread",
+                                "method-wrapper",
+                                "builtin_function_or_method")
+        unnecessary = frozenset("inputScheduler",
+                                "inqueue",
+                                "actions",
+                                "server",
+                                "transitioning",
+                                "Vchange",
+                                "V")
         for i in dir(self):
-            if getattr(self, i).__class__.__name__ in ["instancemethod", "lock", "_Event", "Thread", "method-wrapper", "builtin_function_or_method"]:
+            if getattr(self, i).__class__.__name__ in unpicklable:
                 # unpicklable, so don't copy it
                 continue
             elif str(i) == "tracers":
                 retdict["tracers"] = self.tracers.tracers_init
-            elif (str(i) not in ["inputScheduler", "inqueue", "actions", "server", "transitioning", "Vchange", "V"]) and (not str(i).startswith("__")):
+            elif (str(i) not in unnecessary) and (not str(i).startswith("__")):
                 retdict[str(i)] = getattr(self, i)
-                # ELSE
-                # wastefull to pickle, since they contain information about the future that will
-                #  certainly be replicated when restoring from checkpoint
         return retdict
 
     def inits(self):
@@ -160,7 +172,7 @@ class BaseSimulator(Solver):
         self.simlock.acquire()
         self.waitForGVT = threading.Event()
                 
-        self.Vchange = [threading.Event(), threading.Event(), threading.Event(), threading.Event()]
+        self.Vchange = [threading.Event() for _ in range(4)]
         self.simFinish = threading.Event()
         self.finished = False
 
@@ -246,9 +258,12 @@ class BaseSimulator(Solver):
         models = set()
         for model_id in model_ids:
             if isinstance(self.destinations[model_id], int):
-                raise DEVSException("Cannot migrate model that is not local to the source!")
+                raise DEVSException(
+                    "Cannot migrate model that is not local to the source!")
             if not self.destinations[model_id].relocatable:
-                raise DEVSException("Model %s was marked as fixed and is therefore not allowed to be relocated" % self.destinations[model_id].getModelFullName())
+                raise DEVSException(
+                    "Model %s is fixed and is not allowed to be relocated" 
+                    % self.destinations[model_id].getModelFullName())
             models.add(self.destinations[model_id])
         destination = int(destination)
         if destination == self.name:
@@ -272,7 +287,8 @@ class BaseSimulator(Solver):
         # The inputqueue requires some small processing: all future incomming messages for the model that gets migrated
         # needs to be found. The processed messages list should be empty, with the following reason as the outputQueue.
         remote.messageTransfer(self.inputScheduler.extract(model_ids))
-        bundledModels = [(model.model_id, (model.timeLast, model.timeNext, model.state)) for model in models]
+        bundledModels = [
+            (m.model_id, (m.timeLast, m.timeNext, m.state)) for m in models]
         #TODO clean up this code to use the bundling somewhat more efficient
         remote.activateModels(bundledModels)
         for model in models:
@@ -284,7 +300,8 @@ class BaseSimulator(Solver):
             del self.activities[model.model_id]
 
         # Remove the model from the componentSet of the RootDEVS
-        self.model.componentSet = [m for m in self.model.componentSet if m not in models]
+        components = self.model.componentSet
+        self.model.componentSet = [m for m in components if m not in models]
         for model_id in model_ids:
             self.model.local_model_ids.remove(model_id)
             self.destinations[model_id] = destination
@@ -361,7 +378,12 @@ class BaseSimulator(Solver):
         new_model.timeLast = currentState[0]
         new_model.timeNext = currentState[1]
         new_model.state = currentState[2]
-        new_model.oldStates = [self.state_saver(new_model.timeLast, new_model.timeNext, new_model.state, 0.0, {}, 0.0)]
+        new_model.oldStates = [self.state_saver(new_model.timeLast, 
+                                                new_model.timeNext, 
+                                                new_model.state, 
+                                                0.0, 
+                                                {}, 
+                                                0.0)]
         # It is a new model, so add it to the scheduler too
         self.model.scheduler.schedule(new_model)
         self.destinations[model_id] = new_model
@@ -409,8 +431,8 @@ class BaseSimulator(Solver):
 
         :param vector: the vector number to wait for. Should be 0 for colors 0 and 1, should be 1 for colors 2 and 3.
         """
-        #print("Waiting on vector nr %s: %s <-> %s" % (vector, self.V[vector].get(self.name, 0), self.controlmsg[2].get(self.name, 0)))
-        while not (self.V[vector].get(self.name, 0) + self.controlmsg[2].get(self.name, 0) <= 0):
+        while not (self.V[vector].get(self.name, 0) + 
+                   self.controlmsg[2].get(self.name, 0) <= 0):
             self.Vlock.release()
             # Use an event to prevent busy looping
             self.Vchange[vector].wait()
@@ -431,12 +453,12 @@ class BaseSimulator(Solver):
         waiting_vector = self.controlmsg[2]
         accumulating_vector = self.controlmsg[3]
 
-        #print("[%s] RECV %s %s %s %s" % (self.name, m_clock, m_send, waiting_vector, accumulating_vector))
-
         with self.Vlock:
             prevcolor = 3 if self.color == 0 else self.color - 1
             color = self.color
-            finished = (self.name == 0 and not first and (color == 0 or color == 2))
+            finished = (self.name == 0 and 
+                        not first and 
+                        (color == 0 or color == 2))
             if self.name == 0 and not first:
                 if not allZeroDict(waiting_vector):
                     raise DEVSException("GVT bug detected")
@@ -449,68 +471,29 @@ class BaseSimulator(Solver):
                 if GVT < self.GVT:
                     raise DEVSException("GVT is decreasing")
                 self.accumulator = waiting_vector
-                self.getProxy(self.name).setGVT(GVT, [], self.relocator.useLastStateOnly())
+                useLastState = self.relocator.useLastStateOnly()
+                self.getProxy(self.name).setGVT(GVT, 
+                                                [], 
+                                                useLastState)
                 return
             else:
                 self.waitUntilOK(prevcolor)
-                #print("Adding vector %s (%s) to waiting vector (%s)" % (prevcolor, self.V[prevcolor], waiting_vector))
                 addDict(waiting_vector, self.V[prevcolor])
-                #print("Adding vector %s (%s) to accumulating vector (%s)" % (color, self.V[color], accumulating_vector))
                 addDict(accumulating_vector, self.V[color])
                 self.V[prevcolor] = {}
                 self.V[color] = {}
-                localtime = self.prevtime[0] if not self.prevtimefinished else float('inf')
+                if not self.prevtimefinished:
+                    localtime = self.prevtime[0]
+                else:
+                    localtime = float('inf')
                 ntime = localtime if self.name == 0 else min(m_clock, localtime)
-                msg = [ntime, min(m_send, self.Tmin), waiting_vector, accumulating_vector]
+                msg = [ntime, 
+                       min(m_send, self.Tmin), 
+                       waiting_vector, 
+                       accumulating_vector]
                 self.Tmin = float('inf')
             self.color = (self.color + 1) % 4
         self.nextLP.receiveControl(msg)
-
-        """
-        v = 0 if self.color == 0 or self.color == 1 else 1
-        if self.color == 0 or self.color == 2:
-            # We are currently white, about to turn red
-            if self.name == 0 and not first:
-                # The controller received the message that went around completely
-                # The count != check is needed to distinguish between init and finish
-                # So we are finished now, don't update the color here!!
-                if not allZeroDict(count):
-                    raise DEVSException("GVT bug detected")
-                # Perform some rounding to prevent slight deviations due to floating point errors
-                from math import floor
-                GVT = floor(min(m_clock, m_send))
-                if GVT < self.GVT:
-                    raise DEVSException("GVT is decreasing")
-                # Do this with a proxy to make it async
-                self.getProxy(self.name).setGVT(GVT, [], self.relocator.useLastStateOnly())
-                return
-            else:
-                # Either at the controller at init
-                #  or just a normal node that is about to turn red
-                with self.Vlock:
-                    self.color = (self.color + 1) % 4
-                    addDict(count, self.V[v])
-                    self.V[v] = {}
-                    # Time in the first iteration doesn't matter,
-                    # as we will certainly do a second run
-                    msg = [None, min(m_send, self.Tmin), count]
-                self.nextLP.receiveControl(msg)
-
-        elif self.color == 1 or self.color == 3:
-            # We are currently red, about to turn white
-            # First wait for all messages in the medium
-            with self.Vlock:
-                self.waitUntilOK(v)
-                addDict(count, self.V[v])
-                self.V[v] = {}
-                # Now our V is ok, so clear it
-                self.color = (self.color + 1) % 4
-                localtime = self.prevtime[0] if not self.prevtimefinished else float('inf')
-                ntime = localtime if self.name == 0 else min(m_clock, localtime)
-                msg = [ntime, min(m_send, self.Tmin), count]
-                self.Tmin = float('inf')
-            self.nextLP.receiveControl(msg)
-        """
 
     def setIrreversible(self):
         """
@@ -539,7 +522,8 @@ class BaseSimulator(Solver):
         # GVT is just a time, it does not contain an age field!
         #assert debug("Got setGVT")
         if GVT < self.GVT:
-            raise DEVSException("GVT cannot decrease from " + str(self.GVT) + " to " + str(GVT) + "!")
+            raise DEVSException("GVT cannot decrease from %s to %s!" 
+                                % (self.GVT, GVT))
         if GVT == self.GVT:
             # The same, so don't do the batched fossil collection
             # This will ALWAYS happen at the controller first, as this is the one that gets called with the GVT update first
@@ -603,7 +587,13 @@ class BaseSimulator(Solver):
             if self.temporaryIrreversible:
                 #print("Setting new state for %s models" % len(self.model.componentSet))
                 for model in self.model.componentSet:
-                    model.oldStates = [self.state_saver(model.timeLast, model.timeNext, model.state, self.totalActivities[model.model_id], None, None)]
+                    activity = self.totalActivities[model.model_id]
+                    model.oldStates = [self.state_saver(model.timeLast, 
+                                                        model.timeNext, 
+                                                        model.state, 
+                                                        activity, 
+                                                        None, 
+                                                        None)]
                 #TODO this is commented...
                 #self.totalActivities = defaultdict(float)
             # Make a checkpoint too
@@ -635,7 +625,8 @@ class BaseSimulator(Solver):
         # Don't #assert that it is not irreversible, as an irreversible component could theoretically still be reverted, but this MUST be to a state when it was not yet irreversible
         # Reverting the complete LP
         if time[0] < self.GVT:
-            raise DEVSException("Reverting to time %f, before the GVT (%f)!" % (time[0], self.GVT))
+            raise DEVSException("Reverting to time %f, before the GVT (%f)!" 
+                                % (time[0], self.GVT))
         #assert debug("Removing actions from time " + str(time))
         self.transitioning = defaultdict(int)
         self.reverts += 1
@@ -658,7 +649,10 @@ class BaseSimulator(Solver):
             # Do not invalidate messages at this time itself, as they are processed in this time step and not generated in this timestep
             if value.timestamp > time:
                 model_id = value.destination
-                unschedules_mintime[model_id] = min(unschedules_mintime.get(model_id, (float('inf'), 0)), value.timestamp)
+                mintime = unschedules_mintime.get(model_id,
+                                                  float('inf'), 
+                                                  0)
+                unschedules_mintime[model_id] = min(mintime, value.timestamp)
                 unschedules.setdefault(model_id, []).append(value.uuid)
             else:
                 #assert debug("NOT invalidating " + str(value.uuid))
@@ -678,7 +672,10 @@ class BaseSimulator(Solver):
             mintime = unschedules_mintime[model_id]
             # Assume we have the simlock already
             self.notifySend(dest_kernel, mintime[0], self.color)
-            self.getProxy(dest_kernel).receiveAntiMessages(mintime, model_id, unschedules[model_id], self.color)
+            self.getProxy(dest_kernel).receiveAntiMessages(mintime, 
+                                                           model_id, 
+                                                           unschedules[model_id], 
+                                                           self.color)
 
         # Controller has read one of the reverted states, so force a rollback there
         if controllerRevert:
@@ -703,7 +700,11 @@ class BaseSimulator(Solver):
         self.checkpoint_restored = False
         remote_location = self.destinations[model_id]
         # NOTE the Vlock is already acquired by the sender
-        msg = NetworkMessage(timestamp, content, self.genUUID(), self.color, model_id)
+        msg = NetworkMessage(timestamp, 
+                             content, 
+                             self.genUUID(), 
+                             self.color, 
+                             model_id)
 
         # Assume we have the simlock
         self.notifySend(remote_location, msg.timestamp[0], msg.color)
@@ -750,7 +751,7 @@ class BaseSimulator(Solver):
                 continue
             #assert debug("Processing external msg: " + str(msg))
             model = self.model_ids[dest_model]
-            msg.content = {model.ports[entry]: msg.content[entry] for entry in msg.content}
+            msg.content = {model.ports[e]: msg.content[e] for e in msg.content}
             if msg.timestamp <= self.prevtime:
                 # Timestamp is before the prevtime
                 # so set the prevtime back in the past
@@ -784,10 +785,15 @@ class BaseSimulator(Solver):
         try:
             with self.simlock:
                 with self.Vlock:
-                    if model_id not in self.model.local_model_ids and model_id is not None:
+                    if (model_id not in self.model.local_model_ids and 
+                            model_id is not None):
                         self.notifyReceive(color)
-                        self.getProxy(self.destinations[model_id]).receiveAntiMessages(mintime, model_id, uuids, self.color)
-                        self.notifySend(self.destinations[model_id], mintime[0], self.color)
+                        destination = self.destinations[model_id]
+                        self.getProxy(destination).receiveAntiMessages(mintime, 
+                                                                       model_id, 
+                                                                       uuids, 
+                                                                       self.color)
+                        self.notifySend(destination, mintime[0], self.color)
                         return
                     if mintime <= self.prevtime:
                         # Timestamp is before the prevtime
@@ -826,7 +832,8 @@ class BaseSimulator(Solver):
             # Finish at the termination time
             if self.model.timeNext > self.termination_time:
                 try:
-                    return self.inputScheduler.readFirst().timestamp > self.termination_time
+                    timestamp = self.inputScheduler.readFirst().timestamp
+                    return timestamp > self.termination_time
                 except IndexError:
                     # No message waiting to be processed, so finished
                     return True
@@ -835,7 +842,8 @@ class BaseSimulator(Solver):
         else:
             # Use a termination condition
             # This code is only ran at the controller, as this is the only one with a termination condition
-            if self.prevtime[0] == float('inf') or self.termination_condition(self.prevtime, self.total_model):
+            if (self.prevtime[0] == float('inf') or 
+                    self.termination_condition(self.prevtime, self.total_model)):
                 if not self.finish_sent:
                     self.finishAtTime((self.prevtime[0], self.prevtime[1] + 1))
                     self.finish_sent = True
@@ -879,8 +887,11 @@ class BaseSimulator(Solver):
         """
         #assert debug("Adding action for time " + str(time) + ", GVT = " + str(self.GVT))
         if time[0] < self.GVT:
-            raise DEVSException("Cannot execute action before the GVT! (time = " + str(time) + ", GVT = " + str(self.GVT) + ")")
-        if self.irreversible and len(self.actions) > 0 and time > self.actions[-1][0]:
+            raise DEVSException("Can't execute action (%s) before the GVT (%s)!"
+                                % (time, self.GVT))
+        if (self.irreversible and 
+                len(self.actions) > 0 and 
+                time > self.actions[-1][0]):
             self.performActions()
         # An append is an atomic action, though we need to lock it as other operations on it arent' atomic
         with self.actionlock:
@@ -896,11 +907,13 @@ class BaseSimulator(Solver):
         :param time: time up to which to remove all actions
         """
         if time[0] < self.GVT:
-            raise DEVSException("Cannot remove action before the GVT! (time = " + str(time) + ", GVT = " + str(self.GVT) + ")")
+            raise DEVSException("Cannot remove action (%s) before the GVT (%s)!"
+                                % (time, self.GVT))
         #assert debug("Removing actions for time " + str(time) + " and for ids " + str(model_ids))
         # Actions are unsorted, so we have to go through the complete list
         with self.actionlock:
-            self.actions = [i for i in self.actions if not ((i[1] in model_ids) and (i[0] >= time))]
+            self.actions = [i for i in self.actions 
+                              if not ((i[1] in model_ids) and (i[0] >= time))]
 
     def performActions(self, gvt = float('inf')):
         """
@@ -909,7 +922,8 @@ class BaseSimulator(Solver):
 
         :param gvt: the time up to which all actions should be executed
         """
-        if gvt >= self.termination_time[0] and self.termination_condition is not None:
+        if (gvt >= self.termination_time[0] and 
+                self.termination_condition is not None):
             # But crop of to the termination_time as we might have simulated slightly too long
             gvt = self.termination_time[0] + EPSILON
         with self.actionlock:
@@ -941,7 +955,16 @@ class BaseSimulator(Solver):
         """
         self.tracers = Tracers()
 
-    def setGlobals(self, address, loglevel, checkpointfrequency, checkpointname, statesaver, kernels, msgCopy, memoization, tracers):
+    def setGlobals(self, 
+                   address, 
+                   loglevel, 
+                   checkpointfrequency, 
+                   checkpointname, 
+                   statesaver, 
+                   kernels, 
+                   msgCopy, 
+                   memoization, 
+                   tracers):
         """
         Configure all 'global' variables for this kernel
 
@@ -963,8 +986,13 @@ class BaseSimulator(Solver):
         self.nextLP = self.getProxy((self.name + 1) % kernels)
         self.irreversible = self.kernels == 1
         self.temporaryIrreversible = self.irreversible
-        from pypdevs.statesavers import DeepCopyState, PickleZeroState, PickleHighestState, CopyState, AssignState, CustomState, MarshalState
-        state_saving_options = {0: DeepCopyState, 1: PickleZeroState, 2: PickleHighestState, 3: CopyState, 4: AssignState, 5: CustomState, 6: MarshalState}
+        state_saving_options = {0: DeepCopyState, 
+                                1: PickleZeroState, 
+                                2: PickleHighestState, 
+                                3: CopyState, 
+                                4: AssignState, 
+                                5: CustomState, 
+                                6: MarshalState}
         self.state_saver = state_saving_options[statesaver]
         # Save the integer value for checkpointing
         self.state_saving = statesaver
@@ -991,10 +1019,12 @@ class BaseSimulator(Solver):
             # The message is sent before the timenext, so update the clock
             clock = message.timestamp
         try:
-            while (abs(clock[0] - message.timestamp[0]) < EPSILON and (clock[1] == message.timestamp[1])):
+            while (abs(clock[0] - message.timestamp[0]) < EPSILON and 
+                    (clock[1] == message.timestamp[1])):
                 for port in message.content:
                     aDEVS = port.hostDEVS
-                    aDEVS.myInput.setdefault(port, []).extend(message.content[port])
+                    content = message.content[port]
+                    aDEVS.myInput.setdefault(port, []).extend(content)
                     self.transitioning[aDEVS] |= 2
                 self.inputScheduler.removeFirst()
                 message = self.inputScheduler.readFirst()
@@ -1013,8 +1043,13 @@ class BaseSimulator(Solver):
         self.performActions()
         # Wait for the determined period of time
         currentRTTime = (time.time() - self.rt_zerotime)
-        self.asynchronousGenerator.checkInterrupt(currentRTTime / self.realtimeScale)
-        nextSimTime = min(self.model.timeNext[0], self.termination_time[0], self.asynchronousGenerator.getNextTime()) * self.realtimeScale
+        scaledRTTime = currentRTTime / self.realtimeScale
+        self.asynchronousGenerator.checkInterrupt(scaledRTTime)
+        nextSimTime = min(self.model.timeNext[0], 
+                          self.termination_time[0], 
+                          self.asynchronousGenerator.getNextTime())
+        # Scaled realtime
+        nextSimTime *= self.realtimeScale
 
         # Subtract the time that we already did our computation
         waitTime = nextSimTime - currentRTTime
@@ -1033,7 +1068,8 @@ class BaseSimulator(Solver):
             msg = {eventPort: [eventValue]}
             eventPort.hostDEVS.myInput = msg
             self.transitioning[eventPort.hostDEVS] = 2
-            self.model.timeNext = ((time.time() - self.rt_zerotime) / self.realtimeScale, 1)
+            timediff = time.time() - self.rt_zerotime
+            self.model.timeNext = (timediff / self.realtimeScale, 1)
             # Transition
             return False
         elif waitTime <= 0:
@@ -1147,7 +1183,8 @@ class BaseSimulator(Solver):
             # Always release the simlock when we got it
             self.simlock.release()
         # Ask the next node for its situation
-        return self.nextLP.finishRing(self.msgSent + msgSent, self.msgRecv + msgRecv)
+        return self.nextLP.finishRing(self.msgSent + msgSent, 
+                                      self.msgRecv + msgRecv)
 
     def checkpoint(self):
         """
@@ -1156,7 +1193,8 @@ class BaseSimulator(Solver):
         not saved by pickling the base simulator.
         """
         # pdc = PythonDevs Checkpoint
-        outfile = open(str(self.CHK_name) + "_" + str(round(self.GVT, 2)) + "_" + str(self.name) + ".pdc", 'w')
+        outfile = open("%s_%s_%s.pdc" 
+                       % (self.CHK_name, round(self.GVT, 2), self.name), 'w')
         # If the model was flattened when it was sent to this node, we will also need to flatten it while checkpointing
         if self.flattened:
             self.model.flattenConnections()

@@ -57,10 +57,16 @@ class SchedulerAH(object):
         self.id_fetch = [None] * totalModels
         for model in models:
             if model.timeNext[0] != float('inf'):
-                self.id_fetch[model.model_id] = [model.timeNext, model.model_id, True, model]
+                self.id_fetch[model.model_id] = [model.timeNext, 
+                                                 model.model_id, 
+                                                 True, 
+                                                 model]
                 heappush(self.heap, self.id_fetch[model.model_id])
             else:
-                self.id_fetch[model.model_id] = [model.timeNext, model.model_id, False, model]
+                self.id_fetch[model.model_id] = [model.timeNext, 
+                                                 model.model_id, 
+                                                 False, 
+                                                 model]
         
         self.invalids = 0
         self.maxInvalids = len(models)*2
@@ -120,7 +126,10 @@ class SchedulerAH(object):
                     self.invalids += 1
                 event[2] = False
             if model.timeNext[0] != inf:
-                self.id_fetch[model.model_id] = [model.timeNext, model.model_id, True, model]
+                self.id_fetch[model.model_id] = [model.timeNext, 
+                                                 model.model_id, 
+                                                 True, 
+                                                 model]
                 heappush(self.heap, self.id_fetch[model.model_id])
         #assert debug("Optimizing heap")
         if self.invalids >= self.maxInvalids:

@@ -51,7 +51,10 @@ class SchedulerDH(object):
         self.heap = []
         self.id_fetch = [None] * totalModels
         for model in models:
-            self.id_fetch[model.model_id] = [model.timeNext, model.model_id, False, model]
+            self.id_fetch[model.model_id] = [model.timeNext, 
+                                             model.model_id, 
+                                             False, 
+                                             model]
             self.schedule(model)
         
         self.epsilon = epsilon
@@ -104,7 +107,10 @@ class SchedulerDH(object):
                     continue
                 event[2] = False
             if model.timeNext[0] != inf:
-                self.id_fetch[model.model_id] = [model.timeNext, model.model_id, True, model]
+                self.id_fetch[model.model_id] = [model.timeNext, 
+                                                 model.model_id, 
+                                                 True, 
+                                                 model]
                 heappush(self.heap, self.id_fetch[model.model_id])
 
     def readFirst(self):

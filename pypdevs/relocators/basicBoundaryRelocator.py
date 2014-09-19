@@ -39,7 +39,9 @@ class BasicBoundaryRelocator(BoundaryRelocator):
 
         reverts = set()
 
-        iterlist = [(activity, node) for node, activity in enumerate(self.node_activities) if activity > self.swappiness * avg_activity]
+        iterlist = [(activity, node) 
+                    for node, activity in enumerate(self.node_activities) 
+                    if activity > self.swappiness * avg_activity]
         heapify(iterlist)
 
         if sum(self.locations) == 0:
@@ -55,14 +57,21 @@ class BasicBoundaryRelocator(BoundaryRelocator):
 
             # Now 'node' contains the node that has the most activity of all, so try pushing something away
             boundaries = self.boundaries[node]
-            destactivity, mindest = min([(self.node_activities[destination], destination) for destination in boundaries if boundaries[destination]])
+            destactivity, mindest = \
+                min([(self.node_activities[destination], destination) 
+                for destination in boundaries 
+                if boundaries[destination]])
             boundary = boundaries[mindest]
-            original_heuristic = abs(srcactivity - avg_activity) + abs(destactivity - avg_activity)
+            source_deviation = srcactivity - avg_activity
+            destination_deviation = destactivity - avg_activity
+            original_heuristic = abs(source_deviation) + \
+                                 abs(destination_deviation)
             move = None
             for option in boundary:
                 # Swapping the model would give us the following new 'heuristic'
                 model_activity = self.fetchModelActivity(option)
-                new_heuristic = abs(srcactivity - avg_activity - model_activity) + abs(destactivity - avg_activity + model_activity)
+                new_heuristic = abs(source_deviation - model_activity) + \
+                                abs(destination_deviation + model_activity)
 
                 if new_heuristic < original_heuristic:
                     move = option.model_id

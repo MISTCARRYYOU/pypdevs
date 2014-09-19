@@ -55,7 +55,8 @@ class AsynchronousComboGenerator(object):
                 else:
                     event = line.split(" ", 1)
                     if len(event) != 2:
-                        raise DEVSException("Inproperly formatted input in realtime input file: %s" % event)
+                        raise DEVSException(
+                            "Inproperly formatted input in file: %s" % event)
                     self.nextScheduled = float(event[0])
                     self.file_event = event[1][:-1]
 

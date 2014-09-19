@@ -66,7 +66,8 @@ class SchedulerSL(object):
         try:
             # Age must be exactly the same
             count = 0
-            while (abs(self.models[count].timeNext[0] - t) < self.epsilon) and (self.models[count].timeNext[1] == age):
+            while (abs(self.models[count].timeNext[0] - t) < self.epsilon and 
+                    self.models[count].timeNext[1] == age):
                 # Don't pop, as we want to keep all models in the list
                 immChildren.append(self.models[count])
                 count += 1

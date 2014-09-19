@@ -104,9 +104,13 @@ class SimulatorConfiguration(object):
             raise DEVSException("Relocation directives can only be set when using a manual relocator (the default)\nYou seem to have changed the relocator, so please revert it back by calling the 'setManualRelocator()' first!")
 
         if isinstance(model, int):
-            self.simulator.activityRelocator.addDirective(time=time, model=model, destination=destination)
+            self.simulator.activityRelocator.addDirective(time=time, 
+                                                          model=model, 
+                                                          destination=destination)
         elif isinstance(model, AtomicDEVS):
-            self.simulator.activityRelocator.addDirective(time=time, model=model.model_id, destination=destination)
+            self.simulator.activityRelocator.addDirective(time=time, 
+                                                          model=model.model_id, 
+                                                          destination=destination)
         elif isinstance(model, CoupledDEVS):
             for m in model.componentSet:
                 self.simulator.setRelocationDirective(time, m, destination)
@@ -404,13 +408,20 @@ class SimulatorConfiguration(object):
         """
         if self.simulator.nested:
             raise DEVSException("Logging in nested simulation is not allowed, the logging settings of the parent are used!")
-        if not isinstance(self.destination, tuple) and not isinstance(self.simulator.destination, list) and (destination is not None):
+        if (not isinstance(self.destination, tuple) and 
+                not isinstance(self.simulator.destination, list) and 
+                (destination is not None)):
             raise DEVSException("Logging destination should be a tuple or a list containing an IP addres, followed by a port address")
         if isinstance(level, str):
             import logging
             # Convert to the correct location
             level = level.lower()
-            loglevels = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WARN, "warn": logging.WARN, "error": logging.ERROR, "critical": logging.CRITICAL}
+            loglevels = {"debug": logging.DEBUG, 
+                         "info": logging.INFO, 
+                         "warning": logging.WARN, 
+                         "warn": logging.WARN, 
+                         "error": logging.ERROR, 
+                         "critical": logging.CRITICAL}
             try:
                 level = loglevels[level]
             except IndexError:
@@ -488,7 +499,15 @@ class SimulatorConfiguration(object):
         if not isinstance(state_saving, int) and not isinstance(state_saving, str):
             raise DEVSException("State saving should be done using an integer or a string")
         if isinstance(state_saving, str):
-            options = {"deepcopy": 0, "pickle0": 1, "pickleH": 2, "pickle": 2, "copy": 3, "assign": 4, "none": 4, "custom":5, "marshal": 6}
+            options = {"deepcopy": 0, 
+                       "pickle0": 1, 
+                       "pickleH": 2, 
+                       "pickle": 2, 
+                       "copy": 3, 
+                       "assign": 4, 
+                       "none": 4, 
+                       "custom": 5, 
+                       "marshal": 6}
             try:
                 state_saving = options[state_saving]
             except IndexError:
@@ -652,7 +671,9 @@ class SimulatorConfiguration(object):
         """
         if swappiness < 1.0:
             raise DEVSException("Basic Boundary Activity Relocator should have a swappiness >= 1.0")
-        self.setActivityRelocatorCustom("basicBoundaryRelocator", "BasicBoundaryRelocator", swappiness)
+        self.setActivityRelocatorCustom("basicBoundaryRelocator", 
+                                        "BasicBoundaryRelocator", 
+                                        swappiness)
 
     def setGreedyAllocator(self):
         """

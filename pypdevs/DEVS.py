@@ -214,8 +214,11 @@ class AtomicDEVS(BaseDEVS):
         :param time: the time up to which the activity should be calculated
         :param activities: dictionary containing all activities for the models
         """
-        activities[self.model_id] = sum(
-                [state.activity for state in self.oldStates if state.timeLast[0] < time])
+        accumulator = 0.0
+        for state in self.oldStates:
+            if state.timeLast[0] < time:
+                accumulator += state.activity
+        activities[self.model_id] = accumulator
         
     def setGVT(self, GVT, activities, lastStateOnly):
         """
@@ -289,7 +292,8 @@ class AtomicDEVS(BaseDEVS):
         :returns: state -- the state at that time
         """
         if self.location != MPIRedirect.local.name:
-            return getProxy(self.location).getStateAtTime(self.model_id, requestTime)
+            return getProxy(self.location).getStateAtTime(self.model_id, 
+                                                          requestTime)
         elif firstCall:
             # Shortcut if the call is local
             return self.state
@@ -725,7 +729,8 @@ class RootDEVS(BaseDEVS):
             except:
                 exec("from %s import %s" % schedulerType)
             nrmodels = len(self.models)
-            self.scheduler = eval("%s(self.componentSet, EPSILON, nrmodels)" % schedulerType[1])
+            self.scheduler = eval("%s(self.componentSet, EPSILON, nrmodels)" 
+                                  % schedulerType[1])
         else:
             raise DEVSException("Unknown Scheduler: " + str(schedulerType))
 
@@ -861,17 +866,20 @@ def directConnect(componentSet, local):
         for outport in i.OPorts:
             # The new contents of the line
             outport.routingOutLine = []
-            worklist = [(p, outport.zFunctions.get(p, None)) for p in outport.outLine]
+            worklist = [(p, outport.zFunctions.get(p, None)) 
+                        for p in outport.outLine]
             for outline, z in worklist:
                 # If it is a coupled model, we must expand this model
                 if isinstance(outline.hostDEVS, CoupledDEVS):
                     for inline in outline.outLine:
                         # Add it to the current iterating list, so we can just continue
-                        worklist.append((inline, appendZ(z, outline.zFunctions[inline])))
+                        entry = (inline, appendZ(z, outline.zFunctions[inline]))
+                        worklist.append(entry)
                         # If it is a Coupled model, we should just continue 
                         # expanding it and not add it to the finished line
                         if not isinstance(inline.hostDEVS, CoupledDEVS):
-                            outport.routingOutLine.append((inline, appendZ(z, outline.zFunctions[inline])))
+                            entry = (inline, appendZ(z, outline.zFunctions[inline]))
+                            outport.routingOutLine.append(entry)
                 else:
                     for ol, z in outport.routingOutLine:
                         if ol == outline:

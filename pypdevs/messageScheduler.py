@@ -28,8 +28,9 @@ class MessageScheduler(object):
         For pickling
         """
         retdict = {}
+        unpicklable = frozenset("instancemethod", "lock", "_Event")
         for i in dir(self):
-            if getattr(self, i).__class__.__name__ in ["instancemethod", "lock", "_Event"]:
+            if getattr(self, i).__class__.__name__ in unpicklable:
                 # unpicklable, so don't copy it
                 continue
             elif str(i).startswith("__"):
@@ -69,7 +70,9 @@ class MessageScheduler(object):
         for msg in self.heap:
             for port in msg.content:
                 if port.hostDEVS.model_id in model_ids:
-                    msg.content = {(i.hostDEVS.model_id, i.port_id): msg.content[i] for i in msg.content}
+                    msg.content = {(i.hostDEVS.model_id, i.port_id): 
+                                    msg.content[i]
+                                    for i in msg.content}
                     extracted.append(msg)
                 else:
                     new_heap.append(msg)

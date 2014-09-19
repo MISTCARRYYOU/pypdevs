@@ -17,7 +17,10 @@ class Server(object):
     A server to host MPI, will delegate all of its calls to the active simulation kernel.
     """
     # Don't forward some of the internally provided functions, but simply raise an AttributeError
-    noforward = frozenset(["__str__", "__getstate__", "__setstate__", "__repr__"])
+    noforward = frozenset(["__str__", 
+                           "__getstate__", 
+                           "__setstate__", 
+                           "__repr__"])
 
     def __init__(self, name, totalSize):
         """
@@ -171,7 +174,8 @@ class Server(object):
         while 1:
             #assert debug("[" + str(comm.Get_rank()) + "]Listening to remote " + str(middleware.MPI.ANY_SOURCE) + " -- " + str(middleware.MPI.ANY_TAG))
             # First check if a message is present, otherwise we would have to do busy polling
-            data = comm.recv(source=middleware.MPI.ANY_SOURCE, tag=middleware.MPI.ANY_TAG, status=status)
+            data = comm.recv(source=middleware.MPI.ANY_SOURCE, 
+                             tag=middleware.MPI.ANY_TAG, status=status)
             tag = status.Get_tag()
             #assert debug("Got data from " + str(status.Get_source()) + " (" + str(status.Get_tag()) + "): " + str(data))
             if tag == 0:
@@ -181,10 +185,19 @@ class Server(object):
             elif tag == 1:
                 # NOTE Go back to listening ASAP, so do the processing on another thread
                 if data[1] == "receive" or data[1] == "receiveAntiMessages":
-                    self.threadpool.add_task(Server.processMPI, self, list(data), comm, status.Get_source())
+                    self.threadpool.add_task(Server.processMPI, 
+                                             self, 
+                                             list(data), 
+                                             comm, 
+                                             status.Get_source())
                 else:
                     # Normal 'control' commands are immediately executed, as they would otherwise have the potential to deadlock the node
-                    threading.Thread(target=Server.processMPI, args=[self, list(data), comm, status.Get_source()]).start()
+                    threading.Thread(target=Server.processMPI, 
+                                     args=[self, 
+                                           list(data), 
+                                           comm, 
+                                           status.Get_source()]
+                                    ).start()
             else:
                 # Receiving an answer to a previous request
                 try:
@@ -277,6 +290,7 @@ class Server(object):
         It is required to flush all messages right after all of them happened and this should happen within the critical section!
         """
         if self.queuedTime is not None:
-            self.getProxy(0).massDelayedActions(self.queuedTime, self.queuedMessages)
+            self.getProxy(0).massDelayedActions(self.queuedTime, 
+                                                self.queuedMessages)
             self.queuedMessages = []
             self.queuedTime = None

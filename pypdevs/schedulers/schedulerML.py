@@ -80,6 +80,7 @@ class SchedulerML(object):
         immChildren = []
         t, age = time
         for model in self.models:
-            if abs(model.timeNext[0] - t) < self.epsilon and model.timeNext[1] == age:
+            if (abs(model.timeNext[0] - t) < self.epsilon and 
+                    model.timeNext[1] == age):
                 immChildren.append(model)
         return immChildren

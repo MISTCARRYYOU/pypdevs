@@ -2,7 +2,18 @@
 Class containing a kind of RMI implementation over MPI.
 """
 
-oneways = frozenset(["simulate", "receiveControl", "receive", "finishSimulation", "notifyWait", "notifyRun", "prepare", "receiveAntiMessages", "migrationUnlock", "notifyMigration", "requestMigrationLock", "setGVT"])
+oneways = frozenset(["simulate", 
+                     "receiveControl", 
+                     "receive", 
+                     "finishSimulation", 
+                     "notifyWait", 
+                     "notifyRun", 
+                     "prepare", 
+                     "receiveAntiMessages", 
+                     "migrationUnlock", 
+                     "notifyMigration", 
+                     "requestMigrationLock", 
+                     "setGVT"])
 
 import pypdevs.middleware as middleware
 import exceptions
@@ -69,7 +80,10 @@ class MPIRedirect(object):
     waiting = [None] * 50
     # Don't use range itself, as this doesn't work in Python3
     free_ids = [i for i in range(50)]
-    noproxy = frozenset(["__getnewargs__", "__getinitargs__", "__str__", "__repr__"])
+    noproxy = frozenset(["__getnewargs__", 
+                         "__getinitargs__", 
+                         "__str__", 
+                         "__repr__"])
     local = None
     lst = []
 

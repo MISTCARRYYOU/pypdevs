@@ -14,7 +14,10 @@ def visualizeLocations(kernel):
     for i, loc in enumerate(kernel.destinations):
         try:
             model = kernel.model_ids[i]
-            locationMap[model.x][model.y] = loc if isinstance(loc, int) else kernel.name
+            if isinstance(loc, int):
+                locationMap[model.x][model.y] = loc
+            else:
+                locationMap[model.x][model.y] = kernel.name
         except AttributeError:
             pass
     visualizeMatrix(locationMap, "%i", "locations-%f" % max(0, kernel.GVT))
@@ -29,7 +32,8 @@ def visualizeActivity(sim):
     cached = {}
     import pypdevs.middleware as middleware
     for i in range(len(sim.server.proxies)):
-        cached.update(sim.controller.getProxy(i).getTotalActivity((float('inf'), float('inf'))))
+        proxy = sim.controller.getProxy(i)
+        cached.update(proxy.getTotalActivity((float('inf'), float('inf'))))
     for aDEVS in sim.model.componentSet:
         model_id = aDEVS.model_id
         activities.append([cached[model_id], aDEVS])
