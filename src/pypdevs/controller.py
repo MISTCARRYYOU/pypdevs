@@ -7,6 +7,8 @@ import threading
 import time
 import pypdevs.middleware as middleware
 from pypdevs.DEVS import CoupledDEVS, AtomicDEVS
+from pypdevs.util import DEVSException
+from pypdevs.activityVisualisation import visualizeLocations
 
 class Controller(BaseSimulator):
     """
