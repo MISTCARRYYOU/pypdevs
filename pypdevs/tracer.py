@@ -37,7 +37,9 @@ class Tracers(object):
             exec("from pypdevs.tracers.%s import %s" % tracer[0:2])
         except:
             exec("from %s import %s" % tracer[0:2])
-        self.tracers.append(eval("%s(%i, server, *%s)" % (tracer[1], self.uid, tracer[2])))
+        self.tracers.append(eval("%s(%i, server, *%s)" % (tracer[1], 
+                                                          self.uid, 
+                                                          tracer[2])))
         self.tracers_init.append(tracer)
         self.uid += 1
         self.tracers[-1].startTracer(recover)

@@ -80,7 +80,10 @@ def loadCheckpoint(name):
     except:
         return
     # Use an rsplit, as it is possible that the user defined name contains _ too
-    files = [f for f in listdir if (f.endswith(".pdc")) and not (f.endswith("SIM.pdc")) and (f.rsplit('_', 2)[0] == name)]
+    files = [f for f in listdir 
+               if (f.endswith(".pdc") and 
+                   not f.endswith("SIM.pdc") and 
+                   f.rsplit('_', 2)[0] == name)]
     if len(files) == 0:
         return
     #assert debug("Got matching files: " + str(files))
@@ -100,7 +103,8 @@ def loadCheckpoint(name):
     gvt = 0
     # Construct a temporary server
     from pypdevs.middleware import COMM_WORLD
-    server = Server(middleware.COMM_WORLD.Get_rank(), middleware.COMM_WORLD.Get_size())
+    server = Server(middleware.COMM_WORLD.Get_rank(), 
+                    middleware.COMM_WORLD.Get_size())
     while len(foundGVTs) > 0:
         gvt = foundGVTs[-1]
         if len(foundFiles[gvt]) < nodes:
@@ -208,7 +212,11 @@ class Simulator(object):
 
         self.model_ids = []
         self.locations = defaultdict(list)
-        self.model.finalize(name="", model_counter=0, model_ids=self.model_ids, locations=self.locations, selectHierarchy=[])
+        self.model.finalize(name="", 
+                            model_counter=0, 
+                            model_ids=self.model_ids, 
+                            locations=self.locations, 
+                            selectHierarchy=[])
 
         # Allow the model to provide some of its own configuration
         self.model.simSettings(self)
@@ -259,7 +267,8 @@ class Simulator(object):
             self.drawModelHierarchy(out, self.model)
 
         if isinstance(self.model, CoupledDEVS):
-            self.model.componentSet = directConnect(self.model.componentSet, local(self))
+            self.model.componentSet = directConnect(self.model.componentSet, 
+                                                    local(self))
         elif isinstance(self.model, AtomicDEVS):
             for p in self.model.IPorts:
                 p.routingInLine = []
@@ -272,7 +281,10 @@ class Simulator(object):
 
         if self.allocator is not None and self.allocator.getTerminationTime() == 0.0:
             # It is a static allocator, so this can be done right now!
-            allocs = self.allocator.allocate(self.model.componentSet, None, self.server.size, None)
+            allocs = self.allocator.allocate(self.model.componentSet, 
+                                             None, 
+                                             self.server.size, 
+                                             None)
             for model_id, location in allocs.items():
                 self.model_ids[model_id].location = location
             saveLocations("locationsave.txt", allocs, self.model_ids)
@@ -292,7 +304,10 @@ class Simulator(object):
             #assert warn("Not all initialized MPI nodes are being used in the model setup! Auto allocation could fix this.")
             pass
         elif nodes > self.server.size:
-            raise DEVSException("Not enough MPI nodes started for the distribution given in the model! Models requested at location %i, max node = %i" % (max(self.locations.keys()), self.server.size - 1))
+            raise DEVSException(
+                "Not enough MPI nodes started for the distribution given " +
+                "in the model! Models requested at location %i, max node = %i" 
+                % (max(self.locations.keys()), self.server.size - 1))
 
     def drawModelHierarchy(self, outfile, model):
         """
@@ -315,7 +330,12 @@ class Simulator(object):
                 color = "white"
             else:
                 color = colors[model.location]
-            outfile.write('  "%s" [\n    label = "%s\\nState: %s"\n    color="%s"\n    style=filled\n]\n' % (model.getModelFullName(), model.getModelName(), model.state, color))
+            outfile.write(('  "%s" [\n    label = "%s\\nState: %s"\n' +
+                          '    color="%s"\n    style=filled\n]\n')
+                          % (model.getModelFullName(), 
+                             model.getModelName(), 
+                             model.state, 
+                             color))
 
     def drawModelConnections(self, outfile, model, colors=None):
         """
@@ -339,20 +359,30 @@ class Simulator(object):
                         #TODO color is not yet perfect
                         try:
                             absoluteColor = colors[source][destination]
-                            relativeColor = '"%s 1 1"' % (1/(absoluteColor / float(3*maxEvents)))
+                            relativeColor = '"%s 1 1"' \
+                                % (1 / (absoluteColor / float(3 * maxEvents)))
                         except KeyError:
                             # Simply no message transfer
                             absoluteColor = 0
                             relativeColor = '"1 1 1"'
-                    outfile.write('  "%s" -> "%s" ' % (source.getModelFullName(), destination.getModelFullName()))
+                    outfile.write('  "%s" -> "%s" ' 
+                                  % (source.getModelFullName(), 
+                                     destination.getModelFullName()))
                     if self.hideEdgeLabels and colors is None:
                         outfile.write(';\n')
                     elif self.hideEdgeLabels and colors is not None:
-                        outfile.write('[label="%s",color=%s];\n' % (absoluteColor, relativeColor))
+                        outfile.write('[label="%s",color=%s];\n' 
+                                      % (absoluteColor, relativeColor))
                     elif not self.hideEdgeLabels and colors is None:
-                        outfile.write('[label="%s -> %s"];\n' % (sourcePort.getPortName(), destinationPort.getPortName()))
+                        outfile.write('[label="%s -> %s"];\n' 
+                                      % (sourcePort.getPortName(), 
+                                         destinationPort.getPortName()))
                     elif not self.hideEdgeLabels and colors is not None:
-                        outfile.write('[label="%s -> %s (%s)",color=%s];\n' % (sourcePort.getPortName(), destinationPort.getPortName(), absoluteColor, relativeColor))
+                        outfile.write('[label="%s -> %s (%s)",color=%s];\n' 
+                                      % (sourcePort.getPortName(), 
+                                         destinationPort.getPortName(), 
+                                         absoluteColor, 
+                                         relativeColor))
 
     def checkpoint(self):
         """
@@ -399,8 +429,10 @@ class Simulator(object):
             f = open(filename, 'r')
             locs = {}
             for line in f:
-                model_id, location, modelname = line.split(" ", 2)
-                model_id, location, modelname = int(model_id), int(location), modelname[:-1]
+                split = line.split(" ", 2)
+                model_id = int(split[0])
+                location = int(split[1])
+                modelname = modelname[:-1]
                 # Check for compliance first, otherwise the locations are loaded partially
                 if self.model_ids[model_id].getModelFullName() != modelname:
                     return False
@@ -442,7 +474,8 @@ class Simulator(object):
         :param model_id: the model_id of the model to modify the state from
         :param state: the state to configure
         """
-        self.server.getProxy(self.model_ids[model_id].location).setAttr(model_id, "state", state)
+        proxy = self.server.getProxy(self.model_ids[model_id].location)
+        proxy.setAttr(model_id, "state", state)
         self.controller.stateChange(model_id, "model.state", state)
 
     def modifyStateAttr(self, model_id, attr, value):
@@ -455,7 +488,8 @@ class Simulator(object):
         :param attr: the name of the attribute of the state to modify
         :param value: the value to set as attribute
         """
-        self.server.getProxy(self.model_ids[model_id].location).setStateAttr(model_id, attr, value)
+        proxy = self.server.getProxy(self.model_ids[model_id].location)
+        proxy.setStateAttr(model_id, attr, value)
         self.controller.stateChange(model_id, "model.state.%s" % attr, value)
 
     def modifyAttributes(self, model_id, attr, value):
@@ -499,7 +533,12 @@ class Simulator(object):
                     self.schedulerLocations[location] = self.schedulerType
             try:
                 # Try broadcasting as-is
-                broadcastModel((self.model, self.model_ids, self.flattened), proxylist, self.allowLocalReinit, self.schedulerLocations)
+                broadcastModel((self.model, 
+                                self.model_ids, 
+                                self.flattened), 
+                               proxylist, 
+                               self.allowLocalReinit, 
+                               self.schedulerLocations)
                 self.flattened = False
             except RuntimeError:
                 # Something went wrong, probably exceeded the maximum recursion depth while pickling
@@ -509,7 +548,12 @@ class Simulator(object):
                     self.model.flattenConnections()
                     # Broadcast again, but now mention that the ports were altered
                     self.flattened = True
-                    broadcastModel((self.model, self.model_ids, self.flattened), proxylist, self.allowLocalReinit, self.schedulerLocations)
+                    broadcastModel((self.model, 
+                                    self.model_ids, 
+                                    self.flattened), 
+                                   proxylist, 
+                                   self.allowLocalReinit, 
+                                   self.schedulerLocations)
                 except RuntimeError as e:
                     # Even that didn't solve it, user error!
                     # Stop the nodes from waiting for a broadcast
@@ -520,8 +564,7 @@ class Simulator(object):
             self.setup = True
 
         for proxy in proxylist:
-            proxy.setGlobals( 
-                             tracers=self.tracers,
+            proxy.setGlobals(tracers=self.tracers,
                              address=self.address, 
                              loglevel=self.loglevel, 
                              checkpointfrequency=self.CHK_interval,
@@ -539,19 +582,26 @@ class Simulator(object):
         self.controller.setDSDEVS(self.dsdevs)
         self.controller.setActivityTracking(self.activityTracking)
         self.controller.setClassicDEVS(self.classicDEVS)
-        self.controller.setCellLocationTracer(self.x_size, self.y_size, self.locationCellView)
+        self.controller.setCellLocationTracer(self.x_size, 
+                                              self.y_size, 
+                                              self.locationCellView)
         # Clear this up as we would reregister them otherwise
         self.tracers = []
 
         if self.realtime:
             if len(loclist) > 1:
                 raise DEVSException("Real time simulation only possible locally")
-            self.controller.setRealTime(self.subsystem, self.generatorfile, self.realTimeInputPortReferences, self.realtimeScale, self.realtime_extra)
+            self.controller.setRealTime(self.subsystem, 
+                                        self.generatorfile, 
+                                        self.realTimeInputPortReferences, 
+                                        self.realtimeScale, 
+                                        self.realtime_extra)
 
         # Check whether global or local termination should be used
         if self.termination_condition is not None:
             # Only set the condition on the controller
-            self.server.getProxy(0).setTerminationCondition(self.termination_condition)
+            proxy = self.server.getProxy(0)
+            proxy.setTerminationCondition(self.termination_condition)
         else:
             # Global termination time
             for proxy in proxylist:
@@ -664,7 +714,8 @@ class Simulator(object):
                 #    self.progress = False
                 else:
                     self.progress_finished = False
-                    thread = threading.Thread(target=self.showProgress, args=[locations])
+                    thread = threading.Thread(target=self.showProgress, 
+                                              args=[locations])
                     if self.CHK_interval < 0:
                         self.progress_event = threading.Event()
                     thread.start()
@@ -722,7 +773,9 @@ class Simulator(object):
                 # are very fast, as this runs locally. Otherwise a complete location dictionary would
                 # have to be pickled and unpickled, but also filtered for local models, begin O(n) instead
                 # of the current O(1), at the cost of more function calls
-                state = self.controller.getProxy(self.controller.getLocation(model_id)).getState(model_id)
+                location = self.controller.getLocation(model_id)
+                proxy = self.controller.getProxy(location)
+                state = proxy.getState(model_id)
                 #assert debug("Setting state for " + str(variable))
                 setattr(self, variable, state)
 
@@ -730,7 +783,9 @@ class Simulator(object):
             #assert info("Downloading model from locations")
             # We must download the state from each and every model
             for model in self.model.componentSet:
-                model.state = self.controller.getProxy(self.controller.getLocation(model.model_id)).getState(model.model_id)
+                location = self.controller.getLocation(model.model_id)
+                proxy = self.controller.getProxy(location)
+                model.state = proxy.getState(model.model_id)
 
         # Shut down every location
         #assert debug("Shutting down servers")

@@ -106,7 +106,8 @@ def runTraceAtController(server, uid, model, args):
     :param model: the model that transitions
     :param args: the arguments for the trace function
     """
-    toRun = easyCommand("self.tracers.getByID(%i).trace" % uid, args).replace("\n", "\\n")
+    toRun = easyCommand("self.tracers.getByID(%i).trace" % uid, 
+                        args).replace("\n", "\\n")
     if server.getName() == 0:
         server.getProxy(0).delayedAction(model.timeLast, model.model_id, toRun)
     else:
@@ -172,7 +173,9 @@ def saveLocations(filename, modellocations, model_ids):
     for model_id in modellocations:
         # Format:
         #   model_id location fullname
-        f.write("%s %s %s\n" % (model_id, modellocations[model_id], model_ids[model_id].getModelFullName()))
+        f.write("%s %s %s\n" % (model_id, 
+                                modellocations[model_id], 
+                                model_ids[model_id].getModelFullName()))
     f.close()
 
 def constructGraph(models):

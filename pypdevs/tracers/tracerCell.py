@@ -75,7 +75,13 @@ class TracerCell(object):
         :param t: time at which it should be traced
         """
         try:
-            runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.x, aDEVS.y, t, toStr(aDEVS.state.toCellState())])
+            runTraceAtController(self.server, 
+                                 self.uid, 
+                                 aDEVS, 
+                                 [aDEVS.x, 
+                                    aDEVS.y, 
+                                    t, 
+                                    toStr(aDEVS.state.toCellState())])
         except AttributeError:
             pass
 
@@ -86,7 +92,13 @@ class TracerCell(object):
         :param aDEVS: the model that transitioned
         """
         try:
-            runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.x, aDEVS.y, aDEVS.timeLast, toStr(aDEVS.state.toCellState())])
+            runTraceAtController(self.server, 
+                                 self.uid, 
+                                 aDEVS, 
+                                 [aDEVS.x, 
+                                    aDEVS.y, 
+                                    aDEVS.timeLast, 
+                                    toStr(aDEVS.state.toCellState())])
         except AttributeError:
             pass
 
@@ -97,7 +109,13 @@ class TracerCell(object):
         :param aDEVS: the model that transitioned
         """
         try:
-            runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.x, aDEVS.y, aDEVS.timeLast, toStr(aDEVS.state.toCellState())])
+            runTraceAtController(self.server, 
+                                 self.uid, 
+                                 aDEVS, 
+                                 [aDEVS.x, 
+                                    aDEVS.y, 
+                                    aDEVS.timeLast, 
+                                    toStr(aDEVS.state.toCellState())])
         except AttributeError:
             pass
 
@@ -108,7 +126,13 @@ class TracerCell(object):
         :param aDEVS: the model that transitioned
         """
         try:
-            runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.x, aDEVS.y, aDEVS.timeLast, toStr(aDEVS.state.toCellState())])
+            runTraceAtController(self.server, 
+                                 self.uid, 
+                                 aDEVS, 
+                                 [aDEVS.x, 
+                                    aDEVS.y, 
+                                    aDEVS.timeLast, 
+                                    toStr(aDEVS.state.toCellState())])
         except AttributeError as e:
             print(e)
             pass

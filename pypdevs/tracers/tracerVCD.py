@@ -105,15 +105,18 @@ class TracerVCD(object):
             if self.vcd_varList[i].modelName not in modelList:
                 modelList.append(self.vcd_varList[i].modelName)
         for module in modelList:
-            self.vcd_file.write(("$scope " + str(module) + " " + str(module) + " $end\n").encode())
+            self.vcd_file.write(("$scope %s %s $end\n" % (module, module)).encode())
             for var in range(len(self.vcd_varList)):
                 if self.vcd_varList[var].modelName == module:
                     self.vcd_file.write("$var wire ".encode())
                     if self.vcd_varList[var].bitSize is None:
                         self.vcd_file.write("1".encode())
                     else:
-                        self.vcd_file.write(str(self.vcd_varList[var].bitSize).encode())
-                    self.vcd_file.write((" " + str(self.vcd_varList[var].identifier) + " " + str(self.vcd_varList[var].portName) + " $end\n").encode())
+                        bitsize = str(self.vcd_varList[var].bitSize)
+                        self.vcd_file.write(bitsize.encode())
+                    self.vcd_file.write((" %s %s $end\n" 
+                            % (self.vcd_varList[var].identifier, 
+                               self.vcd_varList[var].portName)).encode())
             self.vcd_file.write(("$upscope $end\n").encode())
         self.vcd_file.write(("$enddefinitions $end\n").encode())
         self.vcd_file.write(("$dumpvars \n").encode())
@@ -126,7 +129,7 @@ class TracerVCD(object):
             else:
                 for i in range(self.vcd_varList[var].bitSize):
                     self.vcd_file.write(("z").encode())
-            self.vcd_file.write((" " + str(self.vcd_varList[var].identifier) + "\n").encode())
+            self.vcd_file.write((" %s\n" % self.vcd_varList[var].identifier).encode())
         self.vcd_file.write(("$end\n").encode())
 
     def trace(self, modelName, time, portName, vcdState):
@@ -144,22 +147,28 @@ class TracerVCD(object):
                 if vcdState[i] == 'b':
                     continue
                 else:
-                    raise DEVSException("Port " + portName + " in model " + modelName + " does not carry a binary signal\n" +
-                            "VCD exports should carry a binary signal, not: " + str(vcdState))
+                    raise DEVSException(("Port %s in model does not carry " +
+                                        "a binary signal\n" +
+                                        "VCD exports require a binary signal," +
+                                        "not: ") % (portName, modelName, vcdState))
             char = vcdState[i]
             if char not in ["0", "1", "E", "x"]:
-                raise DEVSException("Port " + portName + " in model " + modelName + " does not carry a binary signal\n" +
-                          "VCD exports should carry a binary signal, not: " + str(vcdState))
+                raise DEVSException(("Port %s in model does not carry " +
+                                     "a binary signal\n" +
+                                     "VCD exports require a binary signal," +
+                                     "not: ") % (portName, modelName, vcdState))
         # Find the identifier of this wire
         for i in range(len(self.vcd_varList)):
-            if self.vcd_varList[i].modelName == modelName and self.vcd_varList[i].portName == portName:
+            if (self.vcd_varList[i].modelName == modelName and 
+                    self.vcd_varList[i].portName == portName):
                 identifier = str(self.vcd_varList[i].identifier)
                 break
             # If the bitSize is not yet defined, define it now
             if self.vcd_varList[i].bitSize is None:
                 self.vcd_varList[i].bitSize = len(vcdState)-1
             elif self.vcd_varList[i].bitSize != len(vcdState) - 1:
-                raise DEVSException("Wire has changing bitsize!\nYou are probably not using bit encoding on the wires!")
+                raise DEVSException("Wire has changing bitsize!\n" +
+                                    "You are probably not using bit encoding!")
             # Now we have to convert between logisim and VCD notation
             vcdState = vcdState.replace('x', 'z')
             vcdState = vcdState.replace('E', 'x')
@@ -168,7 +177,8 @@ class TracerVCD(object):
                 # Convert float to integer without losing precision
                 # ex. 5.0 --> 50, 5.5 --> 55
                 t = time[0]
-            vcdTime = int(str(int(floor(t))) + str(int(t - floor(t)) * (len(str(t)) - 2)))
+            vcdTime = int(str(int(floor(t))) + 
+                          str(int(t - floor(t)) * (len(str(t)) - 2)))
 
             if (self.vcd_prevtime != vcdTime):
                 # The time has passed, so add a new VCD header
@@ -189,14 +199,26 @@ class TracerVCD(object):
             signalBag = aDEVS.myInput.get(aDEVS.IPorts[I], [])
             if signalBag is not None:
                 for portSignal in signalBag:
-                    runTraceAtController(self.server, self.uid, aDEVS, [name, aDEVS.timeLast, toStr(portName), toStr(portSignal)])
+                    runTraceAtController(self.server, 
+                                         self.uid, 
+                                         aDEVS, 
+                                         [name, 
+                                            aDEVS.timeLast, 
+                                            toStr(portName), 
+                                            toStr(portSignal)])
         for I in range(len(aDEVS.OPorts) ):
             if aDEVS.OPorts[I] in aDEVS.myOutput:
                 portName = aDEVS.OPorts[I].getPortName()
                 signalBag = aDEVS.myOutput.get(aDEVS.OPorts[I], [])
                 if signalBag is not None:
                     for portSignal in signalBag:
-                        runTraceAtController(self.server, self.uid, aDEVS, [name, aDEVS.timeLast, toStr(portName), toStr(portSignal)])
+                        runTraceAtController(self.server, 
+                                             self.uid, 
+                                             aDEVS, 
+                                             [name, 
+                                                aDEVS.timeLast, 
+                                                toStr(portName), 
+                                                toStr(portSignal)])
 
     def traceInternal(self, aDEVS):
         """
@@ -211,7 +233,13 @@ class TracerVCD(object):
                 signalBag = aDEVS.myOutput.get(aDEVS.OPorts[I], [])
                 if signalBag is not None:
                     for portSignal in signalBag:
-                        runTraceAtController(self.server, self.uid, aDEVS, [name, aDEVS.timeLast, toStr(portName), toStr(portSignal)])
+                        runTraceAtController(self.server, 
+                                             self.uid, 
+                                             aDEVS, 
+                                             [name, 
+                                                aDEVS.timeLast, 
+                                                toStr(portName), 
+                                                toStr(portSignal)])
 
     def traceExternal(self, aDEVS):
         """
@@ -225,7 +253,13 @@ class TracerVCD(object):
             signalBag = aDEVS.myInput.get(aDEVS.IPorts[I], [])
             if signalBag is not None:
                 for portSignal in signalBag:
-                    runTraceAtController(self.server, self.uid, aDEVS, [name, aDEVS.timeLast, toStr(portName), toStr(portSignal)])
+                    runTraceAtController(self.server, 
+                                         self.uid, 
+                                         aDEVS, 
+                                         [name, 
+                                            aDEVS.timeLast, 
+                                            toStr(portName), 
+                                            toStr(portSignal)])
 
     def traceInit(self, aDEVS, t):
         """

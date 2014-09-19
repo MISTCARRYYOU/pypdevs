@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 The actual DEVS solvers containing the main DEVS implementation
 """
@@ -129,10 +128,15 @@ class Solver(object):
                 # Prevent a pass statement, which still consumes some time in CPython
                 if self.msgCopy == 1:
                     # Using list comprehension inside of dictionary comprehension...
-                    aDEVS.myInput = {key: [i.copy() for i in aDEVS.myInput[key]] for key in aDEVS.myInput}
+                    aDEVS.myInput = {key: 
+                            [i.copy() for i in aDEVS.myInput[key]] 
+                            for key in aDEVS.myInput}
                 elif self.msgCopy == 0:
                     # Dictionary comprehension
-                    aDEVS.myInput = {key: pickle.loads(pickle.dumps(aDEVS.myInput[key], pickle.HIGHEST_PROTOCOL)) for key in aDEVS.myInput}
+                    aDEVS.myInput = {key: 
+                            pickle.loads(pickle.dumps(aDEVS.myInput[key], 
+                                                      pickle.HIGHEST_PROTOCOL)) 
+                            for key in aDEVS.myInput}
 
             # NOTE ttype mappings:            (EI)
             #       1 -- Internal transition  (01)
@@ -150,7 +154,9 @@ class Solver(object):
                 aDEVS.elapsed = 0.
                 aDEVS.state = aDEVS.confTransition(aDEVS.myInput)
             else:
-                raise DEVSException("Problem in transitioning dictionary: unknown element " + str(ttype))
+                raise DEVSException(
+                    "Problem in transitioning dictionary: unknown element %s" 
+                    % ttype)
 
             ta = aDEVS.timeAdvance()
             aDEVS.timeLast = clock
@@ -168,7 +174,13 @@ class Solver(object):
                 partialmod.append(aDEVS)
                 # But only if there are multiple kernels, since otherwise there would be no other kernel to invoke a revertion
                 # This can save us lots of time for local simulation (however, all other code is written with parallellisation in mind...)
-                aDEVS.oldStates.append(self.state_saver(aDEVS.timeLast, aDEVS.timeNext, aDEVS.state, aDEVS.postActivityCalculation(activityTrackingPreValue), aDEVS.myInput, aDEVS.elapsed))
+                activity = aDEVS.postActivityCalculation(activityTrackingPreValue)
+                aDEVS.oldStates.append(self.state_saver(aDEVS.timeLast, 
+                                                        aDEVS.timeNext, 
+                                                        aDEVS.state, 
+                                                        activity,
+                                                        aDEVS.myInput, 
+                                                        aDEVS.elapsed))
                 if self.relocationPending:
                     # Quit ASAP by throwing an exception
                     for m in partialmod:
@@ -180,7 +192,8 @@ class Solver(object):
                     self.server.flushQueuedMessages()
                     raise QuickStopException()
             elif self.activityTracking:
-                self.totalActivities[aDEVS.model_id] += (aDEVS.postActivityCalculation(activityTrackingPreValue))
+                activity = aDEVS.postActivityCalculation(activityTrackingPreValue)
+                self.totalActivities[aDEVS.model_id] += activity
 
             if self.doSomeTracing:
                 # Completely skip all these calls if no tracing, saves us a lot of function calls
@@ -211,7 +224,12 @@ class Solver(object):
         aDEVS.timeNext = (aDEVS.timeLast[0] + ta, 1)
         # Save the state
         if not self.irreversible:
-            aDEVS.oldStates.append(self.state_saver(aDEVS.timeLast, aDEVS.timeNext, aDEVS.state, 0.0, {}, 0.0))
+            aDEVS.oldStates.append(self.state_saver(aDEVS.timeLast, 
+                                                    aDEVS.timeNext, 
+                                                    aDEVS.state, 
+                                                    0.0, 
+                                                    {}, 
+                                                    0.0))
 
         # All tracing features
         self.tracers.tracesInit(aDEVS, time)
@@ -241,9 +259,12 @@ class Solver(object):
             while len(pending) > 1:
                 # Take the model each time, as we need to make sure that the selectHierarchy is valid everywhere
                 model = pending[0]
-                # This is not the fastest piece of code...
-                chosen = model.selectHierarchy[level-1].select(sorted(list(set([m.selectHierarchy[level] for m in pending])), key=lambda i:i.getModelFullName()))
-                pending = [m for m in pending if m.selectHierarchy[level] == chosen]
+                # Make a set first to remove duplicates
+                colliding = list(set([m.selectHierarchy[level] for m in pending]))
+                chosen = model.selectHierarchy[level-1].select(
+                        sorted(colliding, key=lambda i:i.getModelFullName()))
+                pending = [m for m in pending 
+                             if m.selectHierarchy[level] == chosen]
                 level += 1
             child = pending[0]
         else:
@@ -264,7 +285,8 @@ class Solver(object):
                 self.transitioning[aDEVS] = 2
                 reschedule.add(aDEVS)
         # We have now generated the transitioning variable, though we need some small magic to have it work for classic DEVS
-        self.transitioning = {ClassicDEVSWrapper(m): self.transitioning[m] for m in self.transitioning}
+        self.transitioning = {ClassicDEVSWrapper(m): self.transitioning[m] 
+                              for m in self.transitioning}
         return reschedule
     
     def coupledOutputGeneration(self, time):
@@ -283,13 +305,16 @@ class Solver(object):
                 for inport, z in outport.routingOutLine:
                     aDEVS = inport.hostDEVS
                     if z is not None:
-                        payload = [z(pickle.loads(pickle.dumps(m))) for m in payload]
+                        payload = [z(pickle.loads(pickle.dumps(m))) 
+                                   for m in payload]
                     if aDEVS.model_id in self.model.local_model_ids:
                         # This setdefault call is responsible for our non-linear runtime in several situations...
                         aDEVS.myInput.setdefault(inport, []).extend(payload)
                         self.transitioning[aDEVS] |= 2
                     else:
-                        remotes.setdefault(aDEVS.model_id, {}).setdefault(inport.port_id, []).extend(payload)
+                        remotes.setdefault(aDEVS.model_id, 
+                                           {}).setdefault(inport.port_id, 
+                                                          []).extend(payload)
         for destination in remotes:
             self.send(destination, time, remotes[destination])
         return self.transitioning
@@ -320,7 +345,8 @@ class Solver(object):
         #TODO setting the server is very dirty
         for m in transitioning:
             m.server = self
-        iterlist = [aDEVS.parent for aDEVS in transitioning if aDEVS.modelTransition(self.dsdevsdict)]
+        iterlist = [aDEVS.parent for aDEVS in transitioning 
+                                 if aDEVS.modelTransition(self.dsdevsdict)]
         # Contains all models that are already checked, to prevent duplicate checking.
         # This was not necessary for atomic models, as they are guaranteed to only be called
         # once, as they have no children to induce a structural change on them
@@ -331,7 +357,7 @@ class Solver(object):
                 cDEVS.server = self
                 if cDEVS is None:
                     # Problematic
-                    assert warning("Root DEVS returned True in the modelTransition method; ignoring")
+                    #assert warning("Root DEVS returned True in the modelTransition method; ignoring")
                     continue
                 if cDEVS in checked:
                     continue

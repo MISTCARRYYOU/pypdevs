@@ -87,8 +87,12 @@ class TracerVerbose(object):
             for msg in aDEVS.myOutput.get(aDEVS.OPorts[I], []):
                 text += "\t\t\t\t" + str(msg) + "\n"
         # Don't show the age
-        text += "\t\tNext scheduled internal transition at time %.2f\n" % (aDEVS.timeNext[0])
-        runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.timeLast, '"' + text + '"'])
+        text += "\t\tNext scheduled internal transition at time %.2f\n" \
+                % (aDEVS.timeNext[0])
+        runTraceAtController(self.server, 
+                             self.uid, 
+                             aDEVS, 
+                             [aDEVS.timeLast, '"' + text + '"'])
 
     def traceConfluent(self, aDEVS):
         """
@@ -110,8 +114,12 @@ class TracerVerbose(object):
             for msg in aDEVS.myOutput.get(aDEVS.OPorts[I], []):
                 text += "\t\t\t\t" + str(msg) + "\n"
         # Don't show the age
-        text += "\t\tNext scheduled internal transition at time %.2f\n" % (aDEVS.timeNext[0])
-        runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.timeLast, '"' + text + '"'])
+        text += "\t\tNext scheduled internal transition at time %.2f\n" \
+                % (aDEVS.timeNext[0])
+        runTraceAtController(self.server, 
+                             self.uid, 
+                             aDEVS, 
+                             [aDEVS.timeLast, '"' + text + '"'])
 
     def traceExternal(self, aDEVS):
         """
@@ -128,8 +136,12 @@ class TracerVerbose(object):
                 text += "\t\t\t\t" + str(msg) + "\n"
         text += "\t\tNew State: %s\n" % str(aDEVS.state)
         # Don't show the age
-        text += "\t\tNext scheduled internal transition at time %.2f\n" % (aDEVS.timeNext[0])
-        runTraceAtController(self.server, self.uid, aDEVS, [aDEVS.timeLast, '"' + text + '"'])
+        text += "\t\tNext scheduled internal transition at time %.2f\n" \
+                % (aDEVS.timeNext[0])
+        runTraceAtController(self.server, 
+                             self.uid, 
+                             aDEVS, 
+                             [aDEVS.timeLast, '"' + text + '"'])
 
     def traceInit(self, aDEVS, t):
         """
@@ -142,8 +154,12 @@ class TracerVerbose(object):
         text += "\tINITIAL CONDITIONS in model <%s>\n" % aDEVS.getModelFullName()
         text += "\t\tInitial State: %s\n" % str(aDEVS.state)
         # Don't show the age
-        text += "\t\tNext scheduled internal transition at time %.2f\n" % (aDEVS.timeNext[0])
-        runTraceAtController(self.server, self.uid, aDEVS, [t, '"' + text + '"'])
+        text += "\t\tNext scheduled internal transition at time %.2f\n" \
+                % (aDEVS.timeNext[0])
+        runTraceAtController(self.server, 
+                             self.uid, 
+                             aDEVS, 
+                             [t, '"' + text + '"'])
 
     def traceUser(self, time, aDEVS, variable, value):
         text = "\n"
