@@ -49,7 +49,7 @@ class ThreadingTkInter(object):
         :param queue: the queue object that is also used by the main thread to put events on the main Tk object
         """
         self.runningID = None
-        self.lastInfinity = False
+        self.last_infinity = False
         import collections
         queue = collections.deque()
         self.queue = queue
@@ -70,9 +70,9 @@ class ThreadingTkInter(object):
         :param func: the function to call
         """
         if time == float('inf'):
-            self.lastInfinity = True
+            self.last_infinity = True
         else:
-            self.lastInfinity = False
+            self.last_infinity = False
             self.func = func
             self.queue.append((int(time*1000), self.unlock))
 
@@ -80,6 +80,6 @@ class ThreadingTkInter(object):
         """
         Interrupt the waiting thread
         """
-        if not self.lastInfinity:
+        if not self.last_infinity:
             self.queue.append(None)
         self.unlock()

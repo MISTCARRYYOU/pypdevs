@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 The Sorted List scheduler is the simplest scheduler available, though it has extremely bad performance in several situations.
 
-It simply keeps a list of all models, which is sorted on timeNext. No operations have any influence on this heap itself, as there is no real internal representation. As soon as the imminent models are requested, this list is sorted again and the first elements are returned.
+It simply keeps a list of all models, which is sorted on time_next. No operations have any influence on this heap itself, as there is no real internal representation. As soon as the imminent models are requested, this list is sorted again and the first elements are returned.
 """
 from pypdevs.logger import *
 
@@ -41,7 +40,7 @@ class SchedulerSL(object):
         :param model: the model to schedule
         """
         self.models.append(model)
-        self.models.sort(key=lambda i: i.timeNext)
+        self.models.sort(key=lambda i: i.time_next)
 
     def unschedule(self, model):
         """
@@ -58,7 +57,7 @@ class SchedulerSL(object):
 
         :param reschedule_set: iterable containing all models to reschedule
         """
-        self.models.sort(key=lambda i: i.timeNext)
+        self.models.sort(key=lambda i: i.time_next)
 
     def readFirst(self):
         """
@@ -66,7 +65,7 @@ class SchedulerSL(object):
 
         :returns: timestamp of the first model
         """
-        return self.models[0].timeNext
+        return self.models[0].time_next
 
     def getImminent(self, time):
         """
@@ -76,16 +75,16 @@ class SchedulerSL(object):
 
         .. warning:: For efficiency, this method only checks the **first** elements, so trying to invoke this function with a timestamp higher than the value provided with the *readFirst* method, will **always** return an empty set.
         """
-        immChildren = []
+        imm_children = []
         t, age = time
         try:
             # Age must be exactly the same
             count = 0
-            while (abs(self.models[count].timeNext[0] - t) < self.epsilon and 
-                    self.models[count].timeNext[1] == age):
+            while (abs(self.models[count].time_next[0] - t) < self.epsilon and 
+                    self.models[count].time_next[1] == age):
                 # Don't pop, as we want to keep all models in the list
-                immChildren.append(self.models[count])
+                imm_children.append(self.models[count])
                 count += 1
         except IndexError:
             pass
-        return immChildren
+        return imm_children

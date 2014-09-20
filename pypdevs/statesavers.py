@@ -29,22 +29,22 @@ class DeepCopyState(object):
     """
     Class to save the state using the Python 'deepcopy' library
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = deepcopy(state)
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):
@@ -59,22 +59,22 @@ class CopyState(object):
     """
     Class to save the state using the Python 'copy' library
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = copy(state)
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):
@@ -89,22 +89,22 @@ class AssignState(object):
     """
     Class to save the state using a simple assignment, is unsafe for most situations...
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = state
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):
@@ -119,22 +119,22 @@ class PickleZeroState(object):
     """
     Class to save the state using the Python 'pickle' library, with the option to use the pickling protocol 0.
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = pickle.dumps(state, 0)
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):
@@ -149,22 +149,22 @@ class PickleHighestState(object):
     """
     Class to save the state using the Python 'pickle' library, with the option to use the highest available pickling protocol.
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = pickle.dumps(state, pickle.HIGHEST_PROTOCOL)
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):
@@ -179,22 +179,22 @@ class CustomState(object):
     """
     Class to save the state using a manually defined copy() function of the state. If no such method is provided, an error is raised.
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = state.copy()
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):
@@ -209,22 +209,22 @@ class MarshalState(object):
     """
     Class to save the state using the Python 'marshal' library.
     """
-    def __init__(self, timeLast, timeNext, state, activity, myInput, elapsed):
+    def __init__(self, time_last, time_next, state, activity, my_input, elapsed):
         """
         Constructor
 
-        :param timeLast: timeLast to save
-        :param timeNext: timeNext to save
+        :param time_last: time_last to save
+        :param time_next: time_next to save
         :param state: state to save
         :param activity: the activity of the computation
-        :param myInput: the state input to save for memorisation
+        :param my_input: the state input to save for memorisation
         :param elapsed: the time elapsed
         """
-        self.timeLast = timeLast
-        self.timeNext = timeNext
+        self.time_last = time_last
+        self.time_next = time_next
         self.activity = activity
         self.state = marshal.dumps(state)
-        self.myInput = myInput
+        self.my_input = my_input
         self.elapsed = elapsed
 
     def loadState(self):

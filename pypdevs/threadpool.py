@@ -79,7 +79,7 @@ class ThreadPool(object):
         # A queue is unpicklable...
         return self.num_threads
 
-    def add_task(self, func, *args, **kwargs):
+    def addTask(self, func, *args, **kwargs):
         """
         Add a task to the queue
 

@@ -25,7 +25,7 @@ def visualizeLocations(kernel):
 
     :param kernel: a basesimulator object, to fetch the location of every model
     """
-    locationMap = [[0] * kernel.y_size for _ in range(kernel.x_size)]
+    location_map = [[0] * kernel.y_size for _ in range(kernel.x_size)]
     for i, loc in enumerate(kernel.destinations):
         try:
             model = kernel.model_ids[i]
@@ -35,7 +35,7 @@ def visualizeLocations(kernel):
                 locationMap[model.x][model.y] = kernel.name
         except AttributeError:
             pass
-    visualizeMatrix(locationMap, "%i", "locations-%f" % max(0, kernel.GVT))
+    visualizeMatrix(location_map, "%i", "locations-%f" % max(0, kernel.GVT))
 
 def visualizeActivity(sim):
     """
@@ -49,18 +49,18 @@ def visualizeActivity(sim):
     for i in range(len(sim.server.proxies)):
         proxy = sim.controller.getProxy(i)
         cached.update(proxy.getTotalActivity((float('inf'), float('inf'))))
-    for aDEVS in sim.model.componentSet:
+    for aDEVS in sim.model.component_set:
         model_id = aDEVS.model_id
         activities.append([cached[model_id], aDEVS])
 
     if sim.x_size > 0 and sim.y_size > 0:
-        activityMap = [[0.0] * sim.y_size for i in range(sim.x_size)]
+        activity_map = [[0.0] * sim.y_size for i in range(sim.x_size)]
         for entry in activities:
             try:
-                activityMap[entry[1].x][entry[1].y] = entry[0]
+                activity_map[entry[1].x][entry[1].y] = entry[0]
             except AttributeError:
                 pass
-        visualizeMatrix(activityMap, "%.6f", "activity")
+        visualizeMatrix(activity_map, "%.6f", "activity")
     else:
         activities.sort(key=lambda i: i[1].getModelFullName())
         for entry in activities:

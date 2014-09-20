@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Automaticly polymorphic scheduler. It will automatically adapt to your scheduling requests, though at a slight overhead due to the indirection and statistics gathering. If you know what is your optimal scheduler, please choose this one. If the access pattern varies throughout the simulation, this scheduler is perfect for you. It will choose between the HeapSet and Minimal List scheduler.
 
@@ -27,7 +26,7 @@ class SchedulerAuto(object):
     """
     The polymorphic scheduler class
     """
-    def __init__(self, models, epsilon, totalModels):
+    def __init__(self, models, epsilon, total_models):
         """
         Constructor
 
@@ -36,13 +35,13 @@ class SchedulerAuto(object):
         """
         self.epsilon = epsilon
         self.models = list(models)
-        self.totalModels = totalModels
-        self.schedulerType = SchedulerHS
-        self.subscheduler = SchedulerHS(self.models, self.epsilon, totalModels)
+        self.total_models = total_models
+        self.scheduler_type = SchedulerHS
+        self.subscheduler = SchedulerHS(self.models, self.epsilon, total_models)
 
         # Statistics
-        self.totalSchedules = 0
-        self.collidingSchedules = 0
+        self.total_schedules = 0
+        self.colliding_schedules = 0
 
     def swapSchedulerTo(self, scheduler):
         """
@@ -50,10 +49,10 @@ class SchedulerAuto(object):
 
         :param scheduler: the *class* to switch to
         """
-        if scheduler == self.schedulerType:
+        if scheduler == self.scheduler_type:
             return
-        self.schedulerType = scheduler
-        self.subscheduler = scheduler(self.models, self.epsilon, self.totalModels)
+        self.scheduler_type = scheduler
+        self.subscheduler = scheduler(self.models, self.epsilon, self.total_models)
 
     def schedule(self, model):
         """
@@ -79,16 +78,16 @@ class SchedulerAuto(object):
 
         :param reschedule_set: the set of models to reschedule
         """
-        self.collidingSchedules += len(reschedule_set)
-        self.totalSchedules += 1
-        if self.totalSchedules > 100:
-            if self.collidingSchedules > 15.0 * len(self.models):
+        self.colliding_schedules += len(reschedule_set)
+        self.total_schedules += 1
+        if self.total_schedules > 100:
+            if self.colliding_schedules > 15.0 * len(self.models):
                 # This means that 5/100 of the models is scheduled in every iteration
                 self.swapSchedulerTo(SchedulerML)
-            elif self.collidingSchedules < 500:
+            elif self.colliding_schedules < 500:
                 self.swapSchedulerTo(SchedulerHS)
-            self.collidingSchedules = 0
-            self.totalSchedules = 0
+            self.colliding_schedules = 0
+            self.total_schedules = 0
         return self.subscheduler.massReschedule(reschedule_set)
 
     def readFirst(self):

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Classes and tools for DEVS model specification
 """
@@ -49,17 +48,17 @@ class BaseDEVS(object):
         self.ports = []
 
         # Initialise the times
-        self.timeLast = (0.0, 0)
-        self.timeNext = (0.0, 1)
+        self.time_last = (0.0, 0)
+        self.time_next = (0.0, 1)
 
         self.location = None
     
         # Variables used for optimisations
-        self.myInput = {}  
-        self.myOutput = {}
+        self.my_input = {}  
+        self.my_output = {}
 
         # The state queue, used for time warp
-        self.oldStates = []
+        self.old_states = []
         # List of all memoized states, only useful in distributed simulation 
         #   with memoization enabled
         self.memo = []
@@ -91,10 +90,10 @@ class BaseDEVS(object):
 
         :returns: list -- all variables needed for VCD tracing
         """
-        varList = []
+        var_list = []
         for I in self.ports:
-            varList.append([self.getModelFullName(), I.getPortName()])
-        return varList
+            var_list.append([self.getModelFullName(), I.getPortName()])
+        return var_list
 
     def removePort(self, port):
         """
@@ -104,7 +103,7 @@ class BaseDEVS(object):
         """
         if not hasattr(self, "fullName"):
             raise DEVSException("removePort should only be called during a simulation")
-        if port.isInput:
+        if port.is_input:
             self.IPorts.remove(port)
         else:
             self.OPorts.remove(port)
@@ -113,22 +112,22 @@ class BaseDEVS(object):
         # Also remove all connections to this port
         self.server.getSelfProxy().dsRemovePort(port)
 
-    def addPort(self, name, isInput):
+    def addPort(self, name, is_input):
         """
         Utility function to create a new port and add it everywhere where it is necessary
 
         :param name: the name of the port
-        :param isInput: whether or not this is an input port
+        :param is_input: whether or not this is an input port
         """
         name = name if name is not None else "port%s" % len(self.ports)
-        port = Port(isInput=isInput, name=name) 
-        if isInput:
+        port = Port(is_input=is_input, name=name) 
+        if is_input:
             self.IPorts.append(port)
         else:
             self.OPorts.append(port)
         port.port_id = len(self.ports)
         self.ports.append(port)
-        port.hostDEVS = self
+        port.host_DEVS = self
         return port
       
     def addInPort(self, name=None):
@@ -185,7 +184,7 @@ class BaseDEVS(object):
 
         :returns: string -- the fully qualified name of the model
         """
-        return self.fullName
+        return self.full_name
 
 class AtomicDEVS(BaseDEVS):
     """
@@ -210,7 +209,7 @@ class AtomicDEVS(BaseDEVS):
         self.elapsed = 0.0 
         self.state = None
         self.relocatable = True
-        self.lastReadTime = (0, 0)
+        self.last_read_time = (0, 0)
 
     def setLocation(self, location, force=False):
         """
@@ -235,34 +234,35 @@ class AtomicDEVS(BaseDEVS):
                 accumulator += state.activity
         activities[self.model_id] = accumulator
         
-    def setGVT(self, GVT, activities, lastStateOnly):
+    def setGVT(self, GVT, activities, last_state_only):
         """
         Set the GVT of the model, cleaning up the states vector as required
         for the time warp algorithm
 
         :param GVT: the new value of the GVT
         :param activities: dictionary containing all activities for the models
+        :param last_state_only: whether or not to only use a single state for activity
         """
         copy = None
         activity = 0
-        for i in range(len(self.oldStates)):
-            state = self.oldStates[i]
-            if state.timeLast[0] >= GVT:
+        for i in range(len(self.old_states)):
+            state = self.old_states[i]
+            if state.time_last[0] >= GVT:
                 # Possible that all elements should be kept, 
                 # in which case it will return -1 and only keep the last element
                 # So the copy element should be AT LEAST 0
                 copy = max(0, i-1)
                 break
-            elif not lastStateOnly:
+            elif not last_state_only:
                 activity += state.activity
-        if self.oldStates == []:
+        if self.old_states == []:
             raise DEVSException("Model has no memory of the past!")
         elif copy is None:
-            self.oldStates = [self.oldStates[-1]]
+            self.old_states = [self.old_states[-1]]
         else:
-            self.oldStates = self.oldStates[copy:]
-        if lastStateOnly:
-            activity = self.oldStates[0].activity
+            self.old_states = self.old_states[copy:]
+        if last_state_only:
+            activity = self.old_states[0].activity
         activities[self.model_id] = activity
 
     def revert(self, time, memorize):
@@ -273,49 +273,50 @@ class AtomicDEVS(BaseDEVS):
         :param time: the time up to which should be reverted
         :param memorize: whether or not the saved states should still be kept for memoization
         """
-        newstate = len(self.oldStates) - 1
-        for state in reversed(self.oldStates[1:]):
-            if state.timeLast < time:
+        new_state = len(self.old_states) - 1
+        for state in reversed(self.old_states[1:]):
+            if state.time_last < time:
                 break
-            newstate -= 1
+            new_state -= 1
 
-        state = self.oldStates[newstate]
-        self.timeLast = state.timeLast
-        self.timeNext = state.timeNext
+        state = self.old_states[new_state]
+        self.time_last = state.time_last
+        self.time_next = state.time_next
 
         self.state = state.loadState()
         if memorize:
             # Reverse it too
-            self.memo = self.oldStates[:-len(self.oldStates)+newstate-1:-1]
-        self.oldStates = self.oldStates[:newstate+1]
+            self.memo = self.old_states[:-len(self.old_states) + newstate - 1:-1]
+        self.old_states = self.old_states[:newstate + 1]
 
         # Check if one of the reverted states was ever read for the termination condition
-        if self.lastReadTime > time:
+        if self.last_read_time > time:
             # It seems it was, so notify the main revertion algorithm of this
-            self.lastReadTime = (0, 0)
+            self.last_read_time = (0, 0)
             return True
         else:
             return False
 
         # NOTE clearing the myInput happens in the parent
 
-    def getState(self, requestTime, firstCall=True):
+    def getState(self, request_time, first_call=True):
         """
         For the distributed termination condition: fetch the state of the model at a certain time
 
-        :param time: the time (including age!) for which the state should be fetched
+        :param request_time: the time (including age!) for which the state should be fetched
+        :param first_call: whether or not this is the first call of a possible recursive call
         :returns: state -- the state at that time
         """
         if self.location != MPIRedirect.local.name:
             return getProxy(self.location).getStateAtTime(self.model_id, 
-                                                          requestTime)
-        elif firstCall:
+                                                          request_time)
+        elif first_call:
             # Shortcut if the call is local
             return self.state
-        self.lastReadTime = requestTime
+        self.last_read_time = request_time
         while 1:
-            for state in self.oldStates:
-                if state.timeLast > requestTime:
+            for state in self.old_states:
+                if state.time_last > request_time:
                     return state.loadState()
             # State not yet available... wait some time before trying again...
             time.sleep(0.01)
@@ -417,20 +418,20 @@ class AtomicDEVS(BaseDEVS):
         # as it will never be used. Though for readability, the model_id will be used
         # to make it possible to do some debugging when necessary.
         for port in self.IPorts:
-            port.hostDEVS = self.model_id
+            port.host_DEVS = self.model_id
         for port in self.OPorts:
-            port.hostDEVS = self.model_id
+            port.host_DEVS = self.model_id
 
     def unflattenConnections(self):
         """
         Unflattens the picking graph, by reconstructing backreferences from the ports.
         """
         for port in self.IPorts:
-            port.hostDEVS = self
+            port.host_DEVS = self
         for port in self.OPorts:
-            port.hostDEVS = self
+            port.host_DEVS = self
 
-    def finalize(self, name, model_counter, model_ids, locations, selectHierarchy):
+    def finalize(self, name, model_counter, model_ids, locations, select_hierarchy):
         """
         Finalize the model hierarchy by doing all pre-simulation configuration
 
@@ -440,16 +441,16 @@ class AtomicDEVS(BaseDEVS):
         :param model_counter: the model ID counter
         :param model_ids: a list with all model_ids and their model
         :param locations: dictionary of locations and where every model runs
-        :param selectHierarchy: hierarchy to perform selections in Classic DEVS
+        :param select_hierarchy: hierarchy to perform selections in Classic DEVS
 
         :returns: int -- the new model ID counter
         """
         # Give a name
-        self.fullName = name + str(self.getModelName())
+        self.full_name = name + str(self.getModelName())
 
         # Give a unique ID to the model itself
         self.model_id = model_counter
-        self.selectHierarchy = selectHierarchy + [self]
+        self.select_hierarchy = select_hierarchy + [self]
 
         # Add the element to its designated place in the model_ids list
         model_ids.append(self)
@@ -471,8 +472,8 @@ class AtomicDEVS(BaseDEVS):
         :returns: int -- number of children in this subtree
         """
         lst[self.location] += 1
-        self.nChildren = 1
-        return self.nChildren
+        self.num_children = 1
+        return self.num_children
     
 class CoupledDEVS(BaseDEVS):
     """
@@ -494,7 +495,7 @@ class CoupledDEVS(BaseDEVS):
         BaseDEVS.__init__(self, name)
     
         # All components of this coupled model (the submodels)
-        self.componentSet = []
+        self.component_set = []
 
     def forceSequential(self):
         """
@@ -502,14 +503,14 @@ class CoupledDEVS(BaseDEVS):
         """
         self.setLocation(0, force=True)
     
-    def select(self, immChildren):
+    def select(self, imm_children):
         """
         DEFAULT select function, only used when using Classic DEVS simulation
 
-        :param immChildren: list of all children that want to transition
+        :param imm_children: list of all children that want to transition
         :returns: child -- a single child that is allowed to transition
         """
-        return immChildren[0]
+        return imm_children[0]
 
     def getModelLoad(self, lst):
         """
@@ -519,12 +520,12 @@ class CoupledDEVS(BaseDEVS):
         :returns: number of atomic models in this subtree, including non-local ones
         """
         children = 0
-        for i in self.componentSet:
+        for i in self.component_set:
             children += i.getModelLoad(lst)
-        self.nChildren = children
-        return self.nChildren
+        self.num_children = children
+        return self.num_children
         
-    def finalize(self, name, model_counter, model_ids, locations, selectHierarchy):
+    def finalize(self, name, model_counter, model_ids, locations, select_hierarchy):
         """
         Finalize the model hierarchy by doing all pre-simulation configuration
 
@@ -534,29 +535,29 @@ class CoupledDEVS(BaseDEVS):
         :param model_counter: the model ID counter
         :param model_ids: a list with all model_ids and their model
         :param locations: dictionary of locations and where every model runs
-        :param selectHierarchy: hierarchy to perform selections in Classic DEVS
+        :param select_hierarchy: hierarchy to perform selections in Classic DEVS
 
         :returns: int -- the new model ID counter
         """
         # Set name, even though it will never be requested
-        self.fullName = name + str(self.getModelName())
-        for i in self.componentSet:
-            model_counter = i.finalize(self.fullName + ".", model_counter, 
-                    model_ids, locations, selectHierarchy + [self])
+        self.full_name = name + str(self.getModelName())
+        for i in self.component_set:
+            model_counter = i.finalize(self.full_name + ".", model_counter, 
+                    model_ids, locations, select_hierarchy + [self])
         return model_counter
 
     def flattenConnections(self):
         """
         Flattens the pickling graph, by removing backreference from the ports.
         """
-        for i in self.componentSet:
+        for i in self.component_set:
             i.flattenConnections()
 
     def unflattenConnections(self):
         """
         Unflattens the pickling graph, by reconstructing backreference from the ports.
         """
-        for i in self.componentSet:
+        for i in self.component_set:
             i.unflattenConnections()
 
     def addSubModel(self, model, location = None):
@@ -578,10 +579,10 @@ class CoupledDEVS(BaseDEVS):
         model.location = location if location is not None else self.location
         if model.location is not None and isinstance(model, CoupledDEVS):
             # Set the location of all children
-            for i in model.componentSet:
+            for i in model.component_set:
                 i.setLocation(model.location)
-        self.componentSet.append(model)        
-        if hasattr(self, "fullName"):
+        self.component_set.append(model)        
+        if hasattr(self, "full_name"):
             # Full Name is only created when starting the simulation, so we are currently in a running simulation
             # Dynamic Structure change
             self.server.getSelfProxy().dsScheduleModel(model)
@@ -593,7 +594,7 @@ class CoupledDEVS(BaseDEVS):
 
         :param model: the model to remove as a child
         """
-        if not hasattr(self, "fullName"):
+        if not hasattr(self, "full_name"):
             raise DEVSException("removeSubModel can only be called _during_ a simulation run")
         self.server.getSelfProxy().dsUnscheduleModel(model)
 
@@ -606,22 +607,22 @@ class CoupledDEVS(BaseDEVS):
         :param p1: the port at the start of the connection
         :param p2: the port at the end of the connection
         """
-        ncon = []
+        new_connection = []
         found = False
-        for p in p1.outLine:
+        for p in p1.outline:
             if p == p2 and not found:
                 found = True
             else:
-                ncon.append(p)
-        p1.outLine = ncon
-        ncon = []
+                new_connection.append(p)
+        p1.outline = new_connection
+        new_connection = []
         found = False
-        for p in p2.inLine:
+        for p in p2.inline:
             if p == p1 and not found:
                 found = True
             else:
-                ncon.append(p)
-        p2.inLine = ncon
+                new_connection.append(p)
+        p2.inline = new_connection
         self.server.getSelfProxy().dsUndoDirectConnect()
 
     def connectPorts(self, p1, p2, z = None):
@@ -643,9 +644,9 @@ class CoupledDEVS(BaseDEVS):
         #    associated DEVS. This validates the coupling determined above.
 
         # Internal Coupling:
-        if ((p1.hostDEVS.parent == self and p2.hostDEVS.parent == self) and
+        if ((p1.host_DEVS.parent == self and p2.host_DEVS.parent == self) and
                 (p1.type() == 'OUTPORT' and p2.type() == 'INPORT')):
-            if p1.hostDEVS is p2.hostDEVS:
+            if p1.host_DEVS is p2.host_DEVS:
                 raise DEVSException(("In coupled model '%s', connecting ports" +
                                     " '%s' and '%s' belong to the same model" +
                                     " '%s'. " +
@@ -653,22 +654,22 @@ class CoupledDEVS(BaseDEVS):
                                     self.getModelFullName(),
                                     p1.getPortFullName(),
                                     p2.getPortFullName(),
-                                    p1.hostDEVS.getModelFullName()))
+                                    p1.host_DEVS.getModelFullName()))
             else:
-                p1.outLine.append(p2)
-                p2.inLine.append(p1)
+                p1.outline.append(p2)
+                p2.inline.append(p1)
         
         # External input couplings:
-        elif ((p1.hostDEVS == self and p2.hostDEVS.parent == self) and
+        elif ((p1.host_DEVS == self and p2.host_DEVS.parent == self) and
               (p1.type() == p2.type() == 'INPORT')):
-            p1.outLine.append(p2)
-            p2.inLine.append(p1)
+            p1.outline.append(p2)
+            p2.inline.append(p1)
    
         # Eternal output couplings:
-        elif ((p1.hostDEVS.parent == self and p2.hostDEVS == self) and
+        elif ((p1.host_DEVS.parent == self and p2.host_DEVS == self) and
               (p1.type() == p2.type() == 'OUTPORT')):
-            p1.outLine.append(p2)
-            p2.inLine.append(p1)
+            p1.outline.append(p2)
+            p2.inline.append(p1)
 
         # Other cases (illegal coupling):
         else:
@@ -677,7 +678,7 @@ class CoupledDEVS(BaseDEVS):
                                 self.getModelName(), p1.getPortName(), 
                                 p2.getPortName()))
 
-        p1.zFunctions[p2] = z
+        p1.z_functions[p2] = z
         if hasattr(self, "server"):
             self.server.getSelfProxy().dsUndoDirectConnect()
 
@@ -690,74 +691,75 @@ class CoupledDEVS(BaseDEVS):
         """
         if self.location is None or force:
             self.location = location
-            for child in self.componentSet:
+            for child in self.component_set:
                 child.setLocation(location, force)
 
 class RootDEVS(BaseDEVS):
     """
     The artificial RootDEVS model is the only 'coupled' model in the simulation after direct connection is performed.
     """
-    def __init__(self, components, models, schedulerType):
+    def __init__(self, components, models, scheduler_type):
         """
         Basic constructor.
 
         :param components: the atomic DEVS models that are the cildren, only those that are ran locally should be mentioned
         :param models: all models that have to be passed to the scheduler, thus all models, even non-local ones
-        :param schedulerType: type of scheduler to use (string representation)
+        :param scheduler_type: type of scheduler to use (string representation)
         """
         BaseDEVS.__init__(self, "ROOT model")
         self.componentSet = components
-        self.timeNext = (float('inf'), 1)
+        self.time_next = (float('inf'), 1)
         self.local_model_ids = set()
-        for i in self.componentSet:
+        for i in self.component_set:
             self.local_model_ids.add(i.model_id)
         self.models = models
-        self.schedulerType = schedulerType
-        self.directConnected = True
+        self.scheduler_type = scheduler_type
+        self.direct_connected = True
 
     def undoDirectConnect(self):
         """
         Undo the work of direct connection. It basically doesn't do anything except for marking the direct connected version as 'dirty'.
         """
         # Just mark
-        self.directConnected = False
+        self.direct_connected = False
 
     def directConnect(self):
         """
         Perform direct connection on the models again
         """
-        if self.directConnected:
+        if self.direct_connected:
             # Were already direct connected, so nothing to do
             return
         directConnect(self.models, True)
-        self.directConnected = True
+        self.direct_connected = True
 
-    def setScheduler(self, schedulerType):
+    def setScheduler(self, scheduler_type):
         """
         Set the scheduler to the desired type. Will overwite the previously present scheduler.
 
-        :param schedulerType: type of scheduler to use (string representation)
+        :param scheduler_type: type of scheduler to use (string representation)
         """
-        if isinstance(schedulerType, tuple):
+        if isinstance(scheduler_type, tuple):
             try:
-                exec("from pypdevs.schedulers.%s import %s" % schedulerType)
+                exec("from pypdevs.schedulers.%s import %s" % scheduler_type)
             except:
-                exec("from %s import %s" % schedulerType)
-            nrmodels = len(self.models)
-            self.scheduler = eval("%s(self.componentSet, EPSILON, nrmodels)" 
-                                  % schedulerType[1])
+                exec("from %s import %s" % scheduler_type)
+            nr_models = len(self.models)
+            self.scheduler = eval("%s(self.componentSet, EPSILON, nr_models)"
+                                  % scheduler_type[1])
         else:
-            raise DEVSException("Unknown Scheduler: " + str(schedulerType))
+            raise DEVSException("Unknown Scheduler: " + str(scheduler_type))
 
-    def setGVT(self, GVT, activities, lastStateOnly):
+    def setGVT(self, GVT, activities, last_state_only):
         """
         Sets the GVT of this coupled model
 
         :param GVT: the time to which the GVT should be set
         :param activities: dictionary containing all activities for the models
+        :param last_state_only: whether or not to use the last state for activity
         """
-        for i in self.componentSet:
-            i.setGVT(GVT, activities, lastStateOnly)
+        for i in self.component_set:
+            i.setGVT(GVT, activities, last_state_only)
 
     def fetchActivity(self, time, activities):
         """
@@ -766,7 +768,7 @@ class RootDEVS(BaseDEVS):
         :param time: the time up to which the activity should be calculated
         :param activities: dictionary containing all activities for the models
         """
-        for i in self.componentSet:
+        for i in self.component_set:
             i.fetchActivity(time, activities)
 
     def revert(self, time, memorize):
@@ -778,50 +780,50 @@ class RootDEVS(BaseDEVS):
         :param memorize: whether or not the saved states should still be kept for memoization
         """
         reschedules = set()
-        controllerRevert = False
-        for child in self.componentSet:
-            if child.timeLast >= time:
-                controllerRevert |= child.revert(time, memorize)
+        controller_revert = False
+        for child in self.component_set:
+            if child.time_last >= time:
+                controller_revert |= child.revert(time, memorize)
                 # Was reverted, so reschedule
                 reschedules.add(child)
             # Always clear the inputs, as it is possible that there are only 
             # partial results, which doesn't get found in the timeLast >= time
-            child.myInput = {}
+            child.my_input = {}
         self.scheduler.massReschedule(reschedules)
         self.setTimeNext()
-        return controllerRevert
+        return controller_revert
 
     def setTimeNext(self):
         """
         Reset the timeNext
         """
         try:
-            self.timeNext = self.scheduler.readFirst()
+            self.time_next = self.scheduler.readFirst()
         except IndexError:
             # No element found in the scheduler, so put it to INFINITY
-            self.timeNext = (float('inf'), 1)
+            self.time_next = (float('inf'), 1)
 
 class Port(object):
     """
     Class for DEVS model ports (both input and output). This class provides basic port attributes and query methods.
     """
-    def __init__(self, isInput, name=None):
+    def __init__(self, is_input, name=None):
         """
         Constructor. Creates an input port if isInput evaluates to True, and
         an output port otherwise.
 
-        :param isInput: whether or not this is an input port
+        :param is_input: whether or not this is an input port
         :param name: the name of the port. If None is provided, a unique ID is generated
         """
-        self.inLine = [] 
-        self.outLine = []
-        self.hostDEVS = None 
-        self.msgcount = 0
+        self.inline = [] 
+        self.outline = []
+        self.host_DEVS = None 
+        self.msg_count = 0
    
         # The name of the port
         self.name = name
-        self.isInput = isInput
-        self.zFunctions = {}
+        self.is_input = isInput
+        self.z_functions = {}
 
     def getPortName(self):
         """
@@ -837,7 +839,7 @@ class Port(object):
 
         :returns: fully qualified name of the port
         """
-        return "%s.%s" % (self.hostDEVS.getModelFullName(), self.getPortName())
+        return "%s.%s" % (self.host_DEVS.getModelFullName(), self.getPortName())
 
     def type(self):
         """
@@ -845,7 +847,7 @@ class Port(object):
 
         :returns: either 'INPORT' or 'OUTPORT'
         """
-        if self.isInput:
+        if self.is_input:
             return 'INPORT'
         else:
             return 'OUTPORT'
@@ -858,45 +860,45 @@ def appendZ(first_z, new_z):
     else:
         return lambda x: new_z(first_z(x))
 
-def directConnect(componentSet, local):
+def directConnect(component_set, local):
     """
     Perform direct connection on this CoupledDEVS model
 
-    :param componentSet: the iterable to direct connect
+    :param component_set: the iterable to direct connect
     :param local: whether or not simulation is local; if it is, dynamic structure code will be prepared
     :returns: the direct connected componentSet
     """
-    newlist = []
-    for i in componentSet:
+    new_list = []
+    for i in component_set:
         if isinstance(i, CoupledDEVS):
-            componentSet.extend(i.componentSet)
+            component_set.extend(i.component_set)
         else:
             # Found an atomic model
-            newlist.append(i)
-    componentSet = newlist
+            new_list.append(i)
+    component_set = new_list
 
     # All and only all atomic models are now direct children of this model
-    for i in componentSet:
+    for i in component_set:
         # Remap the output ports
         for outport in i.OPorts:
             # The new contents of the line
-            outport.routingOutLine = []
-            worklist = [(p, outport.zFunctions.get(p, None)) 
-                        for p in outport.outLine]
+            outport.routing_outline = []
+            worklist = [(p, outport.z_functions.get(p, None)) 
+                        for p in outport.outline]
             for outline, z in worklist:
                 # If it is a coupled model, we must expand this model
-                if isinstance(outline.hostDEVS, CoupledDEVS):
-                    for inline in outline.outLine:
+                if isinstance(outline.host_DEVS, CoupledDEVS):
+                    for inline in outline.outline:
                         # Add it to the current iterating list, so we can just continue
-                        entry = (inline, appendZ(z, outline.zFunctions[inline]))
+                        entry = (inline, appendZ(z, outline.z_functions[inline]))
                         worklist.append(entry)
                         # If it is a Coupled model, we should just continue 
                         # expanding it and not add it to the finished line
-                        if not isinstance(inline.hostDEVS, CoupledDEVS):
-                            entry = (inline, appendZ(z, outline.zFunctions[inline]))
-                            outport.routingOutLine.append(entry)
+                        if not isinstance(inline.host_DEVS, CoupledDEVS):
+                            entry = (inline, appendZ(z, outline.z_functions[inline]))
+                            outport.routing_outline.append(entry)
                 else:
-                    for ol, z in outport.routingOutLine:
+                    for ol, z in outport.routing_outline:
                         if ol == outline:
                             break
                     else:
@@ -904,16 +906,16 @@ def directConnect(componentSet, local):
                         # Note that it isn't really mandatory to check for this, 
                         # it is a lot cleaner to do so.
                         # This will greatly increase the complexity of the connector though
-                        outport.routingOutLine.append((outline, z))
+                        outport.routing_outline.append((outline, z))
         # Remap the input ports: identical to the output ports, only in the reverse direction
         for inport in i.IPorts:
-            inport.routingInLine = []
-            for inline in inport.inLine:
-                if isinstance(inline.hostDEVS, CoupledDEVS):
-                    for outline in inline.inLine:
-                        inport.inLine.append(outline)
-                        if not isinstance(outline.hostDEVS, CoupledDEVS):
-                            inport.routingInLine.append(outline)
-                elif inline not in inport.routingInLine:
-                    inport.routingInLine.append(inline)
-    return componentSet
+            inport.routing_outline = []
+            for inline in inport.inline:
+                if isinstance(inline.host_DEVS, CoupledDEVS):
+                    for outline in inline.inline:
+                        inport.inline.append(outline)
+                        if not isinstance(outline.host_DEVS, CoupledDEVS):
+                            inport.routing_inline.append(outline)
+                elif inline not in inport.routing_inline:
+                    inport.routing_inline.append(inline)
+    return component_set

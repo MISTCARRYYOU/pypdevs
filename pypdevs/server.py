@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Server for DEVS simulation
 """
@@ -37,21 +36,21 @@ class Server(object):
                            "__setstate__", 
                            "__repr__"])
 
-    def __init__(self, name, totalSize):
+    def __init__(self, name, total_size):
         """
         Constructor
 
         :param name: the name of the server, used for addressing (in MPI terms, this is the rank)
-        :param totalSize: the total size of the network in which the model lives
+        :param total_size: the total size of the network in which the model lives
         """
         self.name = name
         self.kernel = None
         self.size = totalSize
-        self.proxies = [MPIRedirect(i) for i in range(totalSize)]
+        self.proxies = [MPIRedirect(i) for i in range(total_size)]
         from pypdevs.MPIRedirect import LocalRedirect
         self.proxies[name] = LocalRedirect(self)
-        self.queuedMessages = []
-        self.queuedTime = None
+        self.queued_messages = []
+        self.queued_time = None
         if totalSize > 1:
             self.threadpool = ThreadPool(2)
             self.bootMPI()
@@ -115,7 +114,7 @@ class Server(object):
 
         :param pickled_data: the pickled model
         """
-        self.kernel.pickledModel = pickled_data
+        self.kernel.pickled_model = pickled_data
 
     def prepare(self, scheduler):
         """
@@ -128,15 +127,15 @@ class Server(object):
             self.saveAndProcessModel(data, scheduler)
             middleware.COMM_WORLD.barrier()
 
-    def saveAndProcessModel(self, pickledModel, scheduler):
+    def saveAndProcessModel(self, pickled_model, scheduler):
         """
         Receive the model and set it on the server, but also saves it for further reinitialisation.
 
-        :param pickledModel: pickled representation of the model
+        :param pickled_model: pickled representation of the model
         :param scheduler: the scheduler to use
         """
-        self.sendModel(pickle.loads(pickledModel), scheduler)
-        self.kernel.pickledModel = pickledModel
+        self.sendModel(pickle.loads(pickled_model), scheduler)
+        self.kernel.pickled_model = pickled_model
 
     def getName(self):
         """
@@ -170,15 +169,15 @@ class Server(object):
         :param remote: the location from where the message was received
         """
         # Receiving a new request
-        resendTag = data[0]
+        resend_tag = data[0]
         function = data[1]
         args = data[2]
         kwargs = data[3]
         result = getattr(self, function)(*args, **kwargs)
-        if resendTag is not None:
+        if resend_tag is not None:
             if result is None:
                 result = 0
-            comm.send(result, dest=remote, tag=resendTag)
+            comm.send(result, dest=remote, tag=resend_tag)
 
     def listenMPI(self):
         """
@@ -200,7 +199,7 @@ class Server(object):
             elif tag == 1:
                 # NOTE Go back to listening ASAP, so do the processing on another thread
                 if data[1] == "receive" or data[1] == "receiveAntiMessages":
-                    self.threadpool.add_task(Server.processMPI, 
+                    self.threadpool.addTask(Server.processMPI, 
                                              self, 
                                              list(data), 
                                              comm, 
@@ -279,7 +278,7 @@ class Server(object):
             self.finishWaitingPool()
 
             # Wait until they are done
-            sim.simFinish.wait()
+            sim.sim_finish.wait()
 
     def queueMessage(self, time, model_id, action):
         """
@@ -293,19 +292,19 @@ class Server(object):
         :param model_id: the model_id that executed the action
         :param action: the action to execute (as a string)
         """
-        if self.queuedTime is None:
-            self.queuedTime = time
-        elif time != self.queuedTime:
+        if self.queued_time is None:
+            self.queued_time = time
+        elif time != self.queued_time:
             raise DEVSException("Queued message at wrong time! Probably forgot a flush")
-        self.queuedMessages.append([model_id, action])
+        self.queued_messages.append([model_id, action])
 
     def flushQueuedMessages(self):
         """
         Flush all queued messages to the controller. This will block until all of them are queued.
         It is required to flush all messages right after all of them happened and this should happen within the critical section!
         """
-        if self.queuedTime is not None:
-            self.getProxy(0).massDelayedActions(self.queuedTime, 
-                                                self.queuedMessages)
-            self.queuedMessages = []
-            self.queuedTime = None
+        if self.queued_time is not None:
+            self.getProxy(0).massDelayedActions(self.queued_time, 
+                                                self.queued_messages)
+            self.queued_messages = []
+            self.queued_time = None

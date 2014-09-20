@@ -84,15 +84,15 @@ class TracerVerbose(object):
         text += "\t\tOutput Port Configuration:\n"
         for I in range(len(aDEVS.OPorts)):
             text += "\t\t\tport <" + str(aDEVS.OPorts[I].getPortName()) + ">:\n"
-            for msg in aDEVS.myOutput.get(aDEVS.OPorts[I], []):
+            for msg in aDEVS.my_output.get(aDEVS.OPorts[I], []):
                 text += "\t\t\t\t" + str(msg) + "\n"
         # Don't show the age
         text += "\t\tNext scheduled internal transition at time %.2f\n" \
-                % (aDEVS.timeNext[0])
+                % (aDEVS.time_next[0])
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
-                             [aDEVS.timeLast, '"' + text + '"'])
+                             [aDEVS.time_last, '"' + text + '"'])
 
     def traceConfluent(self, aDEVS):
         """
@@ -105,21 +105,21 @@ class TracerVerbose(object):
         text += "\t\tInput Port Configuration:\n"
         for I in range(len(aDEVS.IPorts)):
             text += "\t\t\tport <" + str(aDEVS.IPorts[I].getPortName()) + ">: \n"
-            for msg in aDEVS.myInput.get(aDEVS.IPorts[I], []):
+            for msg in aDEVS.my_input.get(aDEVS.IPorts[I], []):
                 text += "\t\t\t\t" + str(msg) + "\n"
         text += "\t\tNew State: %s\n" % str(aDEVS.state)
         text += "\t\tOutput Port Configuration:\n"
         for I in range(len(aDEVS.OPorts)):
             text += "\t\t\tport <" + str(aDEVS.OPorts[I].getPortName()) + ">:\n"
-            for msg in aDEVS.myOutput.get(aDEVS.OPorts[I], []):
+            for msg in aDEVS.my_output.get(aDEVS.OPorts[I], []):
                 text += "\t\t\t\t" + str(msg) + "\n"
         # Don't show the age
         text += "\t\tNext scheduled internal transition at time %.2f\n" \
-                % (aDEVS.timeNext[0])
+                % (aDEVS.time_next[0])
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
-                             [aDEVS.timeLast, '"' + text + '"'])
+                             [aDEVS.time_last, '"' + text + '"'])
 
     def traceExternal(self, aDEVS):
         """
@@ -132,16 +132,16 @@ class TracerVerbose(object):
         text += "\t\tInput Port Configuration:\n"
         for I in range(len(aDEVS.IPorts)):
             text += "\t\t\tport <" + str(aDEVS.IPorts[I].getPortName()) + ">:\n"
-            for msg in aDEVS.myInput.get(aDEVS.IPorts[I], []):
+            for msg in aDEVS.my_input.get(aDEVS.IPorts[I], []):
                 text += "\t\t\t\t" + str(msg) + "\n"
         text += "\t\tNew State: %s\n" % str(aDEVS.state)
         # Don't show the age
         text += "\t\tNext scheduled internal transition at time %.2f\n" \
-                % (aDEVS.timeNext[0])
+                % (aDEVS.time_next[0])
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
-                             [aDEVS.timeLast, '"' + text + '"'])
+                             [aDEVS.time_last, '"' + text + '"'])
 
     def traceInit(self, aDEVS, t):
         """
@@ -155,7 +155,7 @@ class TracerVerbose(object):
         text += "\t\tInitial State: %s\n" % str(aDEVS.state)
         # Don't show the age
         text += "\t\tNext scheduled internal transition at time %.2f\n" \
-                % (aDEVS.timeNext[0])
+                % (aDEVS.time_next[0])
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 

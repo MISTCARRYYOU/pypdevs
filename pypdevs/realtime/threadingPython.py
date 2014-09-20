@@ -25,7 +25,7 @@ class ThreadingPython(object):
         Constructor
         """
         self.evt = Event()
-        self.evtLock = Lock()
+        self.evt_lock = Lock()
 
     def wait(self, delay, func):
         """
@@ -44,14 +44,14 @@ class ThreadingPython(object):
         """
         Interrupt the waiting thread
         """
-        with self.evtLock:
+        with self.evt_lock:
             self.evt.set()
 
     def callFunc(self, delay, func):
         """
         Function to call on a seperate thread: will block for the specified time and call the function afterwards
         """
-        with self.evtLock:
+        with self.evt_lock:
             self.evt.wait(delay)
             func()
             self.evt.clear()

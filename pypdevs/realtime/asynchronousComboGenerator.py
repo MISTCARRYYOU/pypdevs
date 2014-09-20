@@ -41,27 +41,27 @@ class AsynchronousComboGenerator(object):
             self.infile = open(filename, 'r')
         else:
             self.infile = None
-        self.nextScheduled = float('inf')
+        self.next_scheduled = float('inf')
         self.file_event = None
         # Call this here already for time 0, to schedule the first event
         self.checkInterrupt(0)
 
-    def checkInterrupt(self, currentTime):
+    def checkInterrupt(self, current_time):
         """
         Checks for whether an interrupt should happen at this time; if so, it also reschedules the next one.
         This method must be called before the internal interrupt is fetched, as otherwise it will not be taken into account.
 
-        :param currentTime: the current simulation time to check for interrupts
+        :param current_time: the current simulation time to check for interrupts
         """
         if self.infile is not None:
             # First check for if the scheduled message happened
-            if (self.nextScheduled - currentTime) <= 0:
+            if (self.next_scheduled - current_time) <= 0:
                 if self.backend.setInterrupt(self.file_event):
-                    self.nextScheduled = float('inf')
+                    self.next_scheduled = float('inf')
                     self.file_event = None
  
             # Now check for the next one
-            if self.nextScheduled == float('inf'):
+            if self.next_scheduled == float('inf'):
                 # We don't have a scheduled event, so fetch one
                 line = self.infile.readline()
                 if line == "":
@@ -72,11 +72,11 @@ class AsynchronousComboGenerator(object):
                     if len(event) != 2:
                         raise DEVSException(
                             "Inproperly formatted input in file: %s" % event)
-                    self.nextScheduled = float(event[0])
+                    self.next_scheduled = float(event[0])
                     self.file_event = event[1][:-1]
 
     def getNextTime(self):
         """
         Return the time of the next event from this generator
         """
-        return self.nextScheduled
+        return self.next_scheduled

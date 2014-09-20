@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Scheduler for external input messages
 """
@@ -84,8 +83,8 @@ class MessageScheduler(object):
         extracted = []
         for msg in self.heap:
             for port in msg.content:
-                if port.hostDEVS.model_id in model_ids:
-                    msg.content = {(i.hostDEVS.model_id, i.port_id): 
+                if port.host_DEVS.model_id in model_ids:
+                    msg.content = {(i.host_DEVS.model_id, i.port_id): 
                                     msg.content[i]
                                     for i in msg.content}
                     extracted.append(msg)
@@ -165,7 +164,6 @@ class MessageScheduler(object):
 
         :param time: time to which revertion should happen
         """
-        nprocessed = []
         try:
             i = 0
             while self.processed[i].timestamp < time:

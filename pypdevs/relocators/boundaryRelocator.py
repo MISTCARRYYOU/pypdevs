@@ -74,16 +74,16 @@ class BoundaryRelocator(object):
         for model in models:
             location = self.locations[model.model_id]
             for iport in model.IPorts:
-                for port in iport.inLine:
-                    if self.locations[port.hostDEVS.model_id] != location:
+                for port in iport.inline:
+                    if self.locations[port.host_DEVS.model_id] != location:
                         self.boundaries[location].setdefault(
-                                self.locations[port.hostDEVS.model_id], 
+                                self.locations[port.host_DEVS.model_id], 
                                 set()).add(model)
             for oport in model.OPorts:
-                for port, _ in oport.routingOutLine:
-                    if self.locations[port.hostDEVS.model_id] != location:
+                for port, _ in oport.routing_outline:
+                    if self.locations[port.host_DEVS.model_id] != location:
                         self.boundaries[location].setdefault(
-                                self.locations[port.hostDEVS.model_id], 
+                                self.locations[port.host_DEVS.model_id], 
                                 set()).add(model)
 
     def removeBoundaries(self, models):
@@ -115,11 +115,11 @@ class BoundaryRelocator(object):
         update = set([model])
         self.removeBoundaries(update)
         for iport in model.IPorts:
-            for port in iport.inLine:
-                update.add(port.hostDEVS)
+            for port in iport.inline:
+                update.add(port.host_DEVS)
         for oport in model.OPorts:
-            for port, _ in oport.routingOutLine:
-                update.add(port.hostDEVS)
+            for port, _ in oport.routing_outline:
+                update.add(port.host_DEVS)
         # Now update contains all the models that should be updated
         # Perform the update 'in cache'
         self.locations[model_id] = destination

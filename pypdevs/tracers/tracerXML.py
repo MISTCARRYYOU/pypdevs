@@ -57,23 +57,23 @@ class TracerXML(object):
         self.xml_file.write("</trace>")
         self.xml_file.flush()
 
-    def trace(self, modelName, timeStamp, eventKind, portInfo, xmlState, strState):
+    def trace(self, model_name, timestamp, event_kind, port_info, xml_state, str_state):
         """
         Save an XML entry for the provided parameters, basically wraps it in the necessary tags
 
-        :param modelName: name of the model
-        :param timeStamp: timestamp of the transition
-        :param eventKind: kind of event that happened, e.g. internal, external, ...
-        :param portInfo: actual information about the port
-        :param xmlState: XML representation of the state
-        :param strState: normal string representation of the state
+        :param model_name: name of the model
+        :param timestamp: timestamp of the transition
+        :param event_kind: kind of event that happened, e.g. internal, external, ...
+        :param port_info: actual information about the port
+        :param xml_state: XML representation of the state
+        :param str_state: normal string representation of the state
         """
         self.xml_file.write(("<event>\n"
-                          + "<model>" + modelName + "</model>\n"
-                          + "<time>" + str(timeStamp[0]) + "</time>\n"
-                          + "<kind>" + eventKind + "</kind>\n"
-                          + portInfo
-                          + "<state>\n"+ xmlState + "<![CDATA[" + strState + "]]>\n</state>\n"
+                          + "<model>" + model_name + "</model>\n"
+                          + "<time>" + str(timestamp[0]) + "</time>\n"
+                          + "<kind>" + event_kind + "</kind>\n"
+                          + port_info
+                          + "<state>\n"+ xml_state + "<![CDATA[" + str_state + "]]>\n</state>\n"
                           + "</event>\n").encode())
 
     def traceInternal(self, aDEVS):
@@ -82,20 +82,20 @@ class TracerXML(object):
 
         :param aDEVS: the model that transitioned
         """
-        portInfo = ""
+        port_info = ""
         for I in range(len(aDEVS.OPorts)):
-            if (aDEVS.OPorts[I] in aDEVS.myOutput and 
-                    aDEVS.myOutput[aDEVS.OPorts[I]] is not None):
-                portInfo += '<port name="' + aDEVS.OPorts[I].getPortName() + '" category="O">\n'
-                for j in aDEVS.myOutput[aDEVS.OPorts[I]]:
-                    portInfo += "<message>" + str(j) + "</message>\n</port>\n"
+            if (aDEVS.OPorts[I] in aDEVS.my_output and 
+                    aDEVS.my_output[aDEVS.OPorts[I]] is not None):
+                port_info += '<port name="' + aDEVS.OPorts[I].getPortName() + '" category="O">\n'
+                for j in aDEVS.my_output[aDEVS.OPorts[I]]:
+                    port_info += "<message>" + str(j) + "</message>\n</port>\n"
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
                              [toStr(aDEVS.getModelFullName()), 
-                                aDEVS.timeLast, 
+                                aDEVS.time_last, 
                                 "'IN'", 
-                                toStr(portInfo), 
+                                toStr(port_info), 
                                 toStr(aDEVS.state.toXML()), 
                                 toStr(aDEVS.state)])
 
@@ -105,18 +105,18 @@ class TracerXML(object):
 
         :param aDEVS: the model that transitioned
         """
-        portInfo = ""
+        port_info = ""
         for I in range(len(aDEVS.IPorts)):
-            portInfo += '<port name="' + aDEVS.IPorts[I].getPortName() + '" category="I">\n'
-            for j in aDEVS.myInput[aDEVS.IPorts[I]]:
-                portInfo += "<message>" + str(j) + "</message>\n</port>\n"
+            port_info += '<port name="' + aDEVS.IPorts[I].getPortName() + '" category="I">\n'
+            for j in aDEVS.my_input[aDEVS.IPorts[I]]:
+                port_info += "<message>" + str(j) + "</message>\n</port>\n"
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
                              [toStr(aDEVS.getModelFullName()), 
-                                aDEVS.timeLast, 
+                                aDEVS.time_last, 
                                 "'EX'", 
-                                toStr(portInfo), 
+                                toStr(port_info), 
                                 toStr(aDEVS.state.toXML()), 
                                 toStr(aDEVS.state)])
 
@@ -126,33 +126,33 @@ class TracerXML(object):
 
         :param aDEVS: the model that transitioned
         """
-        portInfo = ""
+        port_info = ""
         for I in range(len(aDEVS.IPorts)):
-            portInfo += '<port name="' + aDEVS.IPorts[I].getPortName() + '" category="I">\n'
-            for j in aDEVS.myInput[aDEVS.IPorts[I]]:
-                portInfo += "<message>" + str(j) + "</message>\n</port>\n"
+            port_info += '<port name="' + aDEVS.IPorts[I].getPortName() + '" category="I">\n'
+            for j in aDEVS.my_input[aDEVS.IPorts[I]]:
+                port_info += "<message>" + str(j) + "</message>\n</port>\n"
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
                              [toStr(aDEVS.getModelFullName()), 
-                                aDEVS.timeLast, 
+                                aDEVS.time_last, 
                                 "'EX'", 
-                                toStr(portInfo), 
+                                toStr(port_info), 
                                 toStr(aDEVS.state.toXML()), 
                                 toStr(aDEVS.state)])
-        portInfo = ""
+        port_info = ""
         for I in range(len(aDEVS.OPorts)):
-            if aDEVS.OPorts[I] in aDEVS.myOutput:
-                portInfo += '<port name="' + aDEVS.OPorts[I].getPortName() + '" category="O">\n'
-                for j in aDEVS.myOutput[aDEVS.OPorts[I]]:
-                    portInfo += "<message>" + str(j) + "</message>\n</port>\n"
+            if aDEVS.OPorts[I] in aDEVS.my_output:
+                port_info += '<port name="' + aDEVS.OPorts[I].getPortName() + '" category="O">\n'
+                for j in aDEVS.my_output[aDEVS.OPorts[I]]:
+                    port_info += "<message>" + str(j) + "</message>\n</port>\n"
         runTraceAtController(self.server, 
                              self.uid, 
                              aDEVS, 
                              [toStr(aDEVS.getModelFullName()), 
-                                aDEVS.timeLast, 
+                                aDEVS.time_last, 
                                 "'IN'", 
-                                toStr(portInfo), 
+                                toStr(port_info), 
                                 toStr(aDEVS.state.toXML()), 
                                 toStr(aDEVS.state)])
 

@@ -37,6 +37,7 @@ class MPIFaker(object):
     """
     A dummy implementation of MPI4Py if none is found
     """
+    # Don't follow coding style here, as we need to be compatible with the mpi4py interface
     @staticmethod
     def Get_size():
         """

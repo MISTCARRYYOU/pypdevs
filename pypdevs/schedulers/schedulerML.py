@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 The Minimal List scheduler is the simplest scheduler available, 
 though it has extremely bad performance in most cases.
@@ -29,7 +28,7 @@ class SchedulerML(object):
     """
     Scheduler class itself
     """
-    def __init__(self, models, epsilon, totalModels):
+    def __init__(self, models, epsilon, total_models):
         """
         Constructor
 
@@ -48,8 +47,8 @@ class SchedulerML(object):
         :param model: the model to schedule
         """
         self.models.append(model)
-        if model.timeNext < self.minval:
-            self.minval = model.timeNext
+        if model.time_next < self.minval:
+            self.minval = model.time_next
 
     def unschedule(self, model):
         """
@@ -58,11 +57,11 @@ class SchedulerML(object):
         :param model: model to unschedule
         """
         self.models.remove(model)
-        if model.timeNext == self.minval:
+        if model.time_next == self.minval:
             self.minval = (float('inf'), float('inf'))
             for m in self.models:
-                if m.timeNext < self.minval:
-                    self.minval = m.timeNext
+                if m.time_next < self.minval:
+                    self.minval = m.time_next
 
     def massReschedule(self, reschedule_set):
         """
@@ -73,8 +72,8 @@ class SchedulerML(object):
         """
         self.minval = (float('inf'), float('inf'))
         for m in self.models:
-            if m.timeNext < self.minval:
-                self.minval = m.timeNext
+            if m.time_next < self.minval:
+                self.minval = m.time_next
 
     def readFirst(self):
         """
@@ -92,10 +91,10 @@ class SchedulerML(object):
 
         .. warning:: For efficiency, this method only checks the **first** elements, so trying to invoke this function with a timestamp higher than the value provided with the *readFirst* method, will **always** return an empty set.
         """
-        immChildren = []
+        imm_children = []
         t, age = time
         for model in self.models:
-            if (abs(model.timeNext[0] - t) < self.epsilon and 
-                    model.timeNext[1] == age):
-                immChildren.append(model)
-        return immChildren
+            if (abs(model.time_next[0] - t) < self.epsilon and 
+                    model.time_next[1] == age):
+                imm_children.append(model)
+        return imm_children

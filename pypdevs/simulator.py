@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Main simulator class to be used as an interface to the user
 """
@@ -23,7 +22,7 @@ import pypdevs.middleware as middleware
 # Fetch the rank and size of this simulation run
 # Don't get it ourself (e.g. from MPI), as we are possibly not using MPI
 nested = False
-wasMain = False
+was_main = False
 rank, size = middleware.startupMiddleware()
 
 from pypdevs.util import *
@@ -87,28 +86,28 @@ def loadCheckpoint(name):
     if len(files) == 0:
         return
     #assert debug("Got matching files: " + str(files))
-    maxGVT = 0
+    max_GVT = 0
     nodes = middleware.COMM_WORLD.Get_size()
     noncomplete_checkpoint = True
-    foundFiles = {}
-    foundGVTs = []
+    found_files = {}
+    found_GVTs = []
     for f in files:
         gvt = float(f.split('_')[-2])
-        if gvt in foundFiles:
-            foundFiles[gvt].append(f)
+        if gvt in found_files:
+            found_files[gvt].append(f)
         else:
-            foundFiles[gvt] = [f]
-            foundGVTs.append(gvt)
-    foundGVTs.sort()
+            found_files[gvt] = [f]
+            found_GVTs.append(gvt)
+    found_GVTs.sort()
     gvt = 0
     # Construct a temporary server
     from pypdevs.middleware import COMM_WORLD
     server = Server(middleware.COMM_WORLD.Get_rank(), 
                     middleware.COMM_WORLD.Get_size())
-    while len(foundGVTs) > 0:
-        gvt = foundGVTs[-1]
-        if len(foundFiles[gvt]) < nodes:
-            foundGVTs.pop()
+    while len(found_GVTs) > 0:
+        gvt = found_GVTs[-1]
+        if len(found_files[gvt]) < nodes:
+            found_GVTs.pop()
             gvt = 0
         else:
             if gvt == 0:
@@ -116,7 +115,7 @@ def loadCheckpoint(name):
             for rank in range(server.size):
                 if not server.getProxy(rank).checkLoadCheckpoint(name, gvt):
                     # One of the proxies denied, try next
-                    foundGVTs.pop()
+                    found_GVTs.pop()
                     gvt = 0
                     break
             if gvt != 0:
@@ -156,18 +155,18 @@ class Simulator(object):
         self.model = model
 
         global nested
-        global wasMain
+        global was_main
         if nested:
-            wasMain = False
+            was_main = False
         else:
             nested = True
-            wasMain = True
+            was_main = True
         # Initialize all options
-        self.initDone = False
-        self.runGVT = True
+        self.init_done = False
+        self.run_GVT = True
         self.callbacks = []
         self.termination_models = set()
-        self.fetchAll = False
+        self.fetch_all = False
         self.tracers = []
         self.cell = False
         self.x_size = None
@@ -179,34 +178,34 @@ class Simulator(object):
         self.address = ('localhost', 514)
         import logging
         self.loglevel = logging.DEBUG
-        self.CHK_interval = -1
-        self.CHK_name = "(none)"
+        self.checkpoint_interval = -1
+        self.checkpoint_name = "(none)"
         self.GVT_interval = 1
         self.state_saving = 2
-        self.msgCopy = 0
+        self.msg_copy = 0
         self.realtime = False
-        self.realTimeInputPortReferences = {}
+        self.realtime_port_references = {}
         self.subsystem = "python"
-        self.generatorfile = None
+        self.generator_file = None
         self.relocations = []
         self.progress = False
-        self.drawModel = False
-        self.hideEdgeLabels = False
+        self.draw_model = False
+        self.hide_edge_labels = False
         self.setup = False
-        self.allowLocalReinit = False
-        self.modifyValues = {}
-        self.modifyStateValues = {}
-        self.activityTracking = False
-        self.activityVisualisation = False
-        self.locationCellView = False
-        self.sortOnActivity = False
+        self.allow_local_reinit = False
+        self.modify_values = {}
+        self.modify_state_values = {}
+        self.activity_tracking = False
+        self.activity_visualisation = False
+        self.location_cell_view = False
+        self.sort_on_activity = False
         from pypdevs.relocators.manualRelocator import ManualRelocator
-        self.activityRelocator = ManualRelocator()
+        self.activity_relocator = ManualRelocator()
         self.dsdevs = False
         self.memoization = False
         self.classicDEVS = False
         self.setSchedulerActivityHeap()
-        self.locationsFile = None
+        self.locations_file = None
         self.allocator = None
         self.realtime_extra = []
 
@@ -216,7 +215,7 @@ class Simulator(object):
                             model_counter=0, 
                             model_ids=self.model_ids, 
                             locations=self.locations, 
-                            selectHierarchy=[])
+                            select_hierarchy=[])
 
         # Allow the model to provide some of its own configuration
         self.model.simSettings(self)
@@ -260,28 +259,28 @@ class Simulator(object):
 
         self.controller = self.server.getProxy(0)
 
-        if self.drawModel:
+        if self.draw_model:
             #assert info("Drawing model hierarchy")
-            out = open(self.drawModelFile, 'w')
+            out = open(self.draw_model_file, 'w')
             out.write("digraph G {\n")
             self.drawModelHierarchy(out, self.model)
 
         if isinstance(self.model, CoupledDEVS):
-            self.model.componentSet = directConnect(self.model.componentSet, 
+            self.model.component_set = directConnect(self.model.component_set, 
                                                     local(self))
         elif isinstance(self.model, AtomicDEVS):
             for p in self.model.IPorts:
-                p.routingInLine = []
-                p.routingOutLine = []
+                p.routing_inline = []
+                p.routing_outline = []
             for p in self.model.OPorts:
-                p.routingInLine = []
-                p.routingOutLine = []
+                p.routing_inline = []
+                p.routing_outline = []
         else:
             raise DEVSException("Unkown model being simulated")
 
         if self.allocator is not None and self.allocator.getTerminationTime() == 0.0:
             # It is a static allocator, so this can be done right now!
-            allocs = self.allocator.allocate(self.model.componentSet, 
+            allocs = self.allocator.allocate(self.model.component_set, 
                                              None, 
                                              self.server.size, 
                                              None)
@@ -290,11 +289,11 @@ class Simulator(object):
             saveLocations("locationsave.txt", allocs, self.model_ids)
             self.allocator = None
 
-        if self.drawModel and self.allocator is None:
-            out = open(self.drawModelFile, 'a')
+        if self.draw_model and self.allocator is None:
+            out = open(self.draw_model_file, 'a')
             self.drawModelConnections(out, self.model, None)
             out.write("}")
-            self.drawModel = False
+            self.draw_model = False
 
         nodes = len(self.locations.keys())
         if None in self.locations:
@@ -321,7 +320,7 @@ class Simulator(object):
             outfile.write('  subgraph "cluster%s" {\n' % (model.getModelFullName()))
             outfile.write('  label = "%s"\n' % model.getModelName())
             outfile.write('  color=black\n')
-            for m in model.componentSet:
+            for m in model.component_set:
                 self.drawModelHierarchy(outfile, m)
             outfile.write('  }\n')
         elif isinstance(model, AtomicDEVS):
@@ -346,49 +345,49 @@ class Simulator(object):
         :param colors: the colors to draw on the connections. Only used when an initial allocator is used.
         """
         if colors is not None:
-            maxEvents = 0
+            max_events = 0
             for i in colors:
                 for j in colors[i]:
-                    if colors[i][j] > maxEvents:
-                        maxEvents = colors[i][j]
-        for source in model.componentSet:
-            for sourcePort in source.OPorts:
-                for destinationPort, _ in sourcePort.routingOutLine:
-                    destination = destinationPort.hostDEVS
+                    if colors[i][j] > max_events:
+                        max_events = colors[i][j]
+        for source in model.component_set:
+            for source_port in source.OPorts:
+                for destination_port, _ in source_port.routing_outline:
+                    destination = destination_port.host_DEVS
                     if colors is not None:
                         #TODO color is not yet perfect
                         try:
-                            absoluteColor = colors[source][destination]
-                            relativeColor = '"%s 1 1"' \
-                                % (1 / (absoluteColor / float(3 * maxEvents)))
+                            absolute_color = colors[source][destination]
+                            relative_color = '"%s 1 1"' \
+                                % (1 / (absolute_color / float(3 * max_events)))
                         except KeyError:
                             # Simply no message transfer
-                            absoluteColor = 0
-                            relativeColor = '"1 1 1"'
+                            absolute_color = 0
+                            relative_color = '"1 1 1"'
                     outfile.write('  "%s" -> "%s" ' 
                                   % (source.getModelFullName(), 
                                      destination.getModelFullName()))
-                    if self.hideEdgeLabels and colors is None:
+                    if self.hide_edge_labels and colors is None:
                         outfile.write(';\n')
-                    elif self.hideEdgeLabels and colors is not None:
+                    elif self.hide_edge_labels and colors is not None:
                         outfile.write('[label="%s",color=%s];\n' 
-                                      % (absoluteColor, relativeColor))
-                    elif not self.hideEdgeLabels and colors is None:
+                                      % (absolute_color, relative_color))
+                    elif not self.hide_edge_labels and colors is None:
                         outfile.write('[label="%s -> %s"];\n' 
-                                      % (sourcePort.getPortName(), 
-                                         destinationPort.getPortName()))
-                    elif not self.hideEdgeLabels and colors is not None:
+                                      % (source_port.getPortName(), 
+                                         destination_port.getPortName()))
+                    elif not self.hide_edge_labels and colors is not None:
                         outfile.write('[label="%s -> %s (%s)",color=%s];\n' 
-                                      % (sourcePort.getPortName(), 
-                                         destinationPort.getPortName(), 
-                                         absoluteColor, 
-                                         relativeColor))
+                                      % (source_port.getPortName(), 
+                                         destination_port.getPortName(), 
+                                         absolute_color, 
+                                         relative_color))
 
     def checkpoint(self):
         """
         Create a checkpoint of this object
         """
-        outfile = open(str(self.CHK_name) + "_SIM.pdc", 'w')
+        outfile = open(str(self.checkpoint_name) + "_SIM.pdc", 'w')
         if self.flattened:
             self.model.flattenConnections()
         pickle.dump(self, outfile)
@@ -407,9 +406,9 @@ class Simulator(object):
         Set the use of an allocator if required, thus forcing all models to run at the controller
         """
         if self.allocator is not None:
-            self.activityTracking = True
+            self.activity_tracking = True
             # Make simulation local for event capturing
-            for model in self.model.componentSet:
+            for model in self.model.component_set:
                 model.setLocation(0, force=True)
 
     def loadLocationsFromFile(self, filename):
@@ -460,10 +459,10 @@ class Simulator(object):
         loclist = range(self.server.size)
         proxylist = [self.server.getProxy(location) for location in loclist]
         # Send to very model to clear the simulation memory
-        if not self.allowLocalReinit and len(proxylist) == 1:
+        if not self.allow_local_reinit and len(proxylist) == 1:
             raise DEVSException("Reinitialisation for local simulation is disabled by default, please enable it with the configuration method 'setAllowLocalReinit()'")
         for i, proxy in enumerate(proxylist):
-            proxy.resetSimulation(self.schedulerLocations[i])
+            proxy.resetSimulation(self.scheduler_locations[i])
 
     def modifyState(self, model_id, state):
         """
@@ -529,16 +528,16 @@ class Simulator(object):
             self.flattened = False
             # Fill in all schedulers
             for location in loclist:
-                if location not in self.schedulerLocations:
-                    self.schedulerLocations[location] = self.schedulerType
+                if location not in self.scheduler_locations:
+                    self.scheduler_locations[location] = self.scheduler_type
             try:
                 # Try broadcasting as-is
                 broadcastModel((self.model, 
                                 self.model_ids, 
                                 self.flattened), 
                                proxylist, 
-                               self.allowLocalReinit, 
-                               self.schedulerLocations)
+                               self.allow_local_reinit, 
+                               self.scheduler_locations)
                 self.flattened = False
             except RuntimeError:
                 # Something went wrong, probably exceeded the maximum recursion depth while pickling
@@ -552,8 +551,8 @@ class Simulator(object):
                                     self.model_ids, 
                                     self.flattened), 
                                    proxylist, 
-                                   self.allowLocalReinit, 
-                                   self.schedulerLocations)
+                                   self.allow_local_reinit, 
+                                   self.scheduler_locations)
                 except RuntimeError as e:
                     # Even that didn't solve it, user error!
                     # Stop the nodes from waiting for a broadcast
@@ -567,24 +566,24 @@ class Simulator(object):
             proxy.setGlobals(tracers=self.tracers,
                              address=self.address, 
                              loglevel=self.loglevel, 
-                             checkpointfrequency=self.CHK_interval,
-                             checkpointname = self.CHK_name,
+                             checkpointfrequency=self.checkpoint_interval,
+                             checkpointname = self.checkpoint_name,
                              kernels=len(loclist),
                              statesaver=self.state_saving,
                              memoization=self.memoization,
-                             msgCopy=self.msgCopy)
+                             msg_copy=self.msg_copy)
 
         # Set the verbosity on the controller only, otherwise each kernel
         # would open the file itself, causing problems. Furthermore, all
         # verbose output will be sent to the controller
         self.controller.setAllocator(self.allocator)
-        self.controller.setRelocator(self.activityRelocator)
+        self.controller.setRelocator(self.activity_relocator)
         self.controller.setDSDEVS(self.dsdevs)
-        self.controller.setActivityTracking(self.activityTracking)
+        self.controller.setActivityTracking(self.activity_tracking)
         self.controller.setClassicDEVS(self.classicDEVS)
         self.controller.setCellLocationTracer(self.x_size, 
                                               self.y_size, 
-                                              self.locationCellView)
+                                              self.location_cell_view)
         # Clear this up as we would reregister them otherwise
         self.tracers = []
 
@@ -592,9 +591,9 @@ class Simulator(object):
             if len(loclist) > 1:
                 raise DEVSException("Real time simulation only possible locally")
             self.controller.setRealTime(self.subsystem, 
-                                        self.generatorfile, 
-                                        self.realTimeInputPortReferences, 
-                                        self.realtimeScale, 
+                                        self.generator_file, 
+                                        self.realtime_port_references, 
+                                        self.realtime_scale, 
                                         self.realtime_extra)
 
         # Check whether global or local termination should be used
@@ -653,7 +652,7 @@ class Simulator(object):
         while 1:
             # Several dirty checks for whether or not the simulation is done, if it is finished no more calls should be needed
             # Keep doing this until the main thread exits, this should be a thread!
-            if self.CHK_interval > -1:
+            if self.checkpoint_interval > -1:
                 # Don't use an event while checkpointing, as this is unpicklable
                 time.sleep(1)
             else:
@@ -671,8 +670,8 @@ class Simulator(object):
                     gvt = nodetime
             else:
                 gvt = max(self.controller.getGVT(), 0)
-            gvtpercentage = int(gvt / finishtime * 100)
-            gvtlength = min(barwidth, gvtpercentage * barwidth / 100)
+            gvt_percentage = int(gvt / finishtime * 100)
+            gvt_length = min(barwidth, gvt_percentage * barwidth / 100)
             for node in locations:
                 if self.progress_finished:
                     nodetime = float('inf')
@@ -683,10 +682,10 @@ class Simulator(object):
                 s = "%2d" % node
                 s += " |"
                 percentage = int(nodetime / finishtime * 100)
-                s += "#" * gvtlength
-                length = min(barwidth, percentage * barwidth / 100) - gvtlength
+                s += "#" * gvt_length
+                length = min(barwidth, percentage * barwidth / 100) - gvt_length
                 s += self.fillchar * length
-                s += " " * (barwidth - gvtlength - length)
+                s += " " * (barwidth - gvt_length - length)
                 if percentage == 100 and self.fillchar != "E":
                     s += "|DONE"
                 elif percentage == 100 and self.fillchar == "E":
@@ -714,15 +713,15 @@ class Simulator(object):
                 #    self.progress = False
                 else:
                     self.progress_finished = False
-                    thread = threading.Thread(target=self.showProgress, 
+                    thread = threading.Thread(target=self.show_progress, 
                                               args=[locations])
-                    if self.CHK_interval < 0:
+                    if self.checkpoint_interval < 0:
                         self.progress_event = threading.Event()
                     thread.start()
 
             # Local simulation can take a shortcut
             if len(locations) == 1:
-                if self.CHK_interval > 0:
+                if self.checkpoint_interval > 0:
                     # If we use checkpointing, we will need a GVT thread running
                     self.controller.startGVTThread(self.GVT_interval)
                 # Simply do a blocking call, thus preventing the finish ring algorithm
@@ -749,7 +748,7 @@ class Simulator(object):
             if self.progress:
                 self.fillchar = "E"
                 self.progress_finished = True
-                if self.CHK_interval > -1:
+                if self.checkpoint_interval > -1:
                     # With checkpointing running, we need to do this the hard way...
                     self.progress_event.set()
                 # Wait for it to end
@@ -779,10 +778,10 @@ class Simulator(object):
                 #assert debug("Setting state for " + str(variable))
                 setattr(self, variable, state)
 
-        if self.fetchAll:
+        if self.fetch_all:
             #assert info("Downloading model from locations")
             # We must download the state from each and every model
-            for model in self.model.componentSet:
+            for model in self.model.component_set:
                 location = self.controller.getLocation(model.model_id)
                 proxy = self.controller.getProxy(location)
                 model.state = proxy.getState(model.model_id)
@@ -796,24 +795,24 @@ class Simulator(object):
 
         self.progress_finished = True
         # A progress bar was running without checkpointing: set the event to finish it
-        if self.progress and self.CHK_interval <= 0:
+        if self.progress and self.checkpoint_interval <= 0:
             self.progress_event.set()
 
         # Activity tracking is enabled, so visualize it in whatever way was configured
-        if self.activityVisualisation:
+        if self.activity_visualisation:
             visualizeActivity(self)
 
         # Check if the model was to be visualized
-        if self.drawModel:
+        if self.draw_model:
             # Possibly include event count visualisation
             #colors = self.controller.runAllocator()
             colors = self.controller.getEventGraph()
             #assert info("Drawing model distribution")
-            out = open(self.drawModelFile, 'a')
+            out = open(self.draw_model_file, 'a')
             self.drawModelConnections(out, self.model, colors)
             out.write("}")
 
-        global wasMain
-        if wasMain:
+        global was_main
+        if was_main:
             global nested
             nested = False

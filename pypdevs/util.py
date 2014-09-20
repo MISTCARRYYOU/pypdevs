@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Common utility functions used in PyPDEVS
 """
@@ -28,7 +27,7 @@ try:
 except ImportError:
     import pickle
 
-def broadcastModel(data, proxies, allowReinit, schedulerLocations):
+def broadcastModel(data, proxies, allow_reinit, scheduler_locations):
     """
     Broadcast the model to simulate to the provided proxies
 
@@ -36,25 +35,25 @@ def broadcastModel(data, proxies, allowReinit, schedulerLocations):
     :param proxies: iterable containing all proxies
     :param allowReinit: should reinitialisation be allowed
     """
-    if (len(proxies) == 1) and not allowReinit:
+    if (len(proxies) == 1) and not allow_reinit:
         # Shortcut for local simulation with the garantee that no reinits will happen
-        proxies[0].sendModel(data, schedulerLocations[0])
+        proxies[0].sendModel(data, scheduler_locations[0])
         return
     # Otherwise, we always have to pickle
     pickled_data = pickle.dumps(data, pickle.HIGHEST_PROTOCOL)
     if len(proxies) == 1:
-        proxies[0].saveAndProcessModel(pickled_data, schedulerLocations[0])
+        proxies[0].saveAndProcessModel(pickled_data, scheduler_locations[0])
     else:
         for i, proxy in enumerate(proxies[1:]):
             # Prepare by setting up the broadcast receiving
-            proxy.prepare(schedulerLocations[i+1])
+            proxy.prepare(scheduler_locations[i+1])
         # Pickle the data ourselves, to avoid an MPI error when this goes wrong (as we can likely back-up from this error)
         # Broadcast the model to everywhere
         middleware.COMM_WORLD.bcast(pickled_data, root=0)
         # Immediately wait for a barrier, this will be OK as soon as all models have initted their model
         # Still send to ourselves, as we don't receive it from the broadcast
         # Local calls, so no real overhead
-        proxies[0].sendModel(data, schedulerLocations[0])
+        proxies[0].sendModel(data, scheduler_locations[0])
         proxies[0].setPickledData(pickled_data)
         middleware.COMM_WORLD.barrier()
 
@@ -106,12 +105,12 @@ def runTraceAtController(server, uid, model, args):
     :param model: the model that transitions
     :param args: the arguments for the trace function
     """
-    toRun = easyCommand("self.tracers.getByID(%i).trace" % uid, 
-                        args).replace("\n", "\\n")
+    to_run = easyCommand("self.tracers.getByID(%i).trace" % uid, 
+                         args).replace("\n", "\\n")
     if server.getName() == 0:
-        server.getProxy(0).delayedAction(model.timeLast, model.model_id, toRun)
+        server.getProxy(0).delayedAction(model.time_last, model.model_id, to_run)
     else:
-        server.queueMessage(model.timeLast, model.model_id, toRun)
+        server.queueMessage(model.time_last, model.model_id, to_run)
 
 def easyCommand(function, args):
     """ 
@@ -160,7 +159,7 @@ class QuickStopException(Exception):
         """
         return "Quick Stop Exception"
 
-def saveLocations(filename, modellocations, model_ids):
+def saveLocations(filename, model_locations, model_ids):
     """
     Save an allocation specified by the parameter.
 
@@ -170,11 +169,11 @@ def saveLocations(filename, modellocations, model_ids):
     """
     # Save the locations
     f = open(filename, 'w')
-    for model_id in modellocations:
+    for model_id in model_locations:
         # Format:
         #   model_id location fullname
         f.write("%s %s %s\n" % (model_id, 
-                                modellocations[model_id], 
+                                model_locations[model_id], 
                                 model_ids[model_id].getModelFullName()))
     f.close()
 
@@ -187,8 +186,8 @@ def constructGraph(models):
     :returns: dict -- all from-to edges with their number of events
     """
     edges = defaultdict(lambda: defaultdict(int))
-    for model in models.componentSet:
+    for model in models.component_set:
         for outport in model.OPorts:
-            for inport in outport.outLine:
-                edges[outport.hostDEVS][inport.hostDEVS] += outport.msgcount
+            for inport in outport.outline:
+                edges[outport.host_DEVS][inport.host_DEVS] += outport.msg_count
     return edges

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 Actual simulation kernel
 """
@@ -61,19 +60,19 @@ class BaseSimulator(Solver):
         self.model = model
         self.tracers = Tracers()
         self.irreversible = False
-        self.temporaryIrreversible = False
-        self.sendmsgcounter = 0
+        self.temporary_irreversible = False
+        self.send_msg_counter = 0
         self.checkpoint_restored = False
         self.name = name
         self.realtime = False
         self.reset = False
-        self.useDSDEVS = False
-        self.activityTracking = False
+        self.use_DSDEVS = False
+        self.activity_tracking = False
         self.memoization = False
-        self.totalActivities = defaultdict(float)
-        self.msgSent = 0
-        self.msgRecv = 0
-        self.simlockRequest = False
+        self.total_activities = defaultdict(float)
+        self.msg_sent = 0
+        self.msg_recv = 0
+        self.simlock_request = False
 
     def resetSimulation(self, scheduler):
         """
@@ -88,13 +87,13 @@ class BaseSimulator(Solver):
         self.transitioning = defaultdict(int)
         self.tracers = Tracers()
         self.irreversible = False
-        self.temporaryIrreversible = False
-        self.sendmsgcounter = 0
+        self.temporary_irreversible = False
+        self.send_msg_counter = 0
         self.checkpoint_restored = False
         self.realtime = False
         self.reset = True
         proxy = self.getProxy(self.name)
-        proxy.saveAndProcessModel(self.pickledModel, scheduler)
+        proxy.saveAndProcessModel(self.pickled_model, scheduler)
 
     def __setstate__(self, retdict):
         """
@@ -159,9 +158,9 @@ class BaseSimulator(Solver):
         self.priorlock = threading.Lock()
         self.priorevent = threading.Event()
         self.priorevent.set()
-        self.relocationPending = False
+        self.relocation_pending = False
 
-        self.prevtimefinished = False
+        self.prevtime_finished = False
 
         # Mattern's GVT algorithm
         # 0 = white1
@@ -171,24 +170,24 @@ class BaseSimulator(Solver):
         self.color = 0
         self.V = [{}, {}, {}, {}]
         self.Tmin = float('inf')
-        self.controlmsg = None
+        self.control_msg = None
         self.GVT = -float('inf')
 
         self.prevtime = (0, 0)
         self.clock = (-float('inf'), 0)
 
-        self.inputScheduler = MessageScheduler()
-        self.outputQueue = []
+        self.input_scheduler = MessageScheduler()
+        self.output_queue = []
 
         self.simlock = threading.Lock()
         self.Vlock = threading.Lock()
         # Acquire the lock ASAP, to prevent simulation during/after shutdown
         # it has to be released as soon as the simulation is commenced
         self.simlock.acquire()
-        self.waitForGVT = threading.Event()
+        self.wait_for_GVT = threading.Event()
                 
         self.Vchange = [threading.Event() for _ in range(4)]
-        self.simFinish = threading.Event()
+        self.sim_finish = threading.Event()
         self.finished = False
 
         self.inqueue = deque()
@@ -223,13 +222,13 @@ class BaseSimulator(Solver):
         # Set it in case the kernel was already stopped and an invalidation happened
         self.shouldrun.set()
 
-    def sendModel(self, model, model_ids, schedulerType, flattened):
+    def sendModel(self, model, model_ids, scheduler_type, flattened):
         """
         Send a model to this simulation kernel, as this one will be simulated
 
         :param model: the model to set
         :param model_ids: list containing all models in order of their model_ids
-        :param schedulerType: string representation of the scheduler to use
+        :param scheduler_type: string representation of the scheduler to use
         :param flattened: whether or not the model had its ports decoupled from the models to allow pickling
         """
         self.flattened = flattened
@@ -254,9 +253,9 @@ class BaseSimulator(Solver):
 
         self.local = local
         if isinstance(model, CoupledDEVS):
-            self.model = RootDEVS(self.local, model.componentSet, schedulerType)
+            self.model = RootDEVS(self.local, model.componentSet, scheduler_type)
         elif isinstance(model, AtomicDEVS):
-            self.model = RootDEVS(self.local, [model], schedulerType)
+            self.model = RootDEVS(self.local, [model], scheduler_type)
 
         self.activities = {}
 
@@ -301,21 +300,21 @@ class BaseSimulator(Solver):
         # Furthermore, the state vector will be as small as possible to reduce the amount of data that has to be transferred
         # The inputqueue requires some small processing: all future incomming messages for the model that gets migrated
         # needs to be found. The processed messages list should be empty, with the following reason as the outputQueue.
-        remote.messageTransfer(self.inputScheduler.extract(model_ids))
-        bundledModels = [
+        remote.messageTransfer(self.input_scheduler.extract(model_ids))
+        bundled_models = [
             (m.model_id, (m.timeLast, m.timeNext, m.state)) for m in models]
         #TODO clean up this code to use the bundling somewhat more efficient
-        remote.activateModels(bundledModels)
+        remote.activateModels(bundled_models)
         for model in models:
             # No need to ask the new node whether or not there are specific nodes that also have to be informed
             #remote.activateModel(model.model_id, (model.timeLast, model.timeNext, model.state))
             # Delete our representation of the model
             model.state = None
-            model.oldStates = []
+            model.old_states = []
             del self.activities[model.model_id]
 
         # Remove the model from the componentSet of the RootDEVS
-        components = self.model.componentSet
+        components = self.model.component_set
         self.model.componentSet = [m for m in components if m not in models]
         for model_id in model_ids:
             self.model.local_model_ids.remove(model_id)
@@ -346,7 +345,7 @@ class BaseSimulator(Solver):
         with self.priorlock:
             self.priorcount += 1
             self.priorevent.clear()
-        self.relocationPending = True
+        self.relocation_pending = True
         self.simlock.acquire()
         with self.Vlock:
             self.revert((self.GVT, 0))
@@ -363,8 +362,8 @@ class BaseSimulator(Solver):
             if self.priorcount == 0:
                 self.priorevent.set()
 
-        self.prevtimefinished = False
-        self.relocationPending = False
+        self.prevtime_finished = False
+        self.relocation_pending = False
         self.simlock.release()
 
     def activateModels(self, bundle):
@@ -373,10 +372,10 @@ class BaseSimulator(Solver):
 
         :param bundle: a bundle of messages to send, each entry should contain a tuple that can be expanded for the call
         """
-        for model_id, currentState in bundle:
-            self.activateModel(model_id, currentState)
+        for model_id, current_state in bundle:
+            self.activateModel(model_id, current_state)
 
-    def activateModel(self, model_id, currentState):
+    def activateModel(self, model_id, current_state):
         """
         Activate the model at this kernel, thus allowing the kernel to use (and schedule) this model. 
         Note that a revert to the GVT has to happen before calling this function, since the old_states 
@@ -388,13 +387,13 @@ class BaseSimulator(Solver):
         new_model = self.model_ids[model_id]
         old_location = new_model.location
         new_model.location = self.name
-        self.model.componentSet.append(new_model)
+        self.model.component_set.append(new_model)
         self.model.local_model_ids.add(new_model.model_id)
-        new_model.timeLast = currentState[0]
-        new_model.timeNext = currentState[1]
-        new_model.state = currentState[2]
-        new_model.oldStates = [self.state_saver(new_model.timeLast, 
-                                                new_model.timeNext, 
+        new_model.time_last = current_state[0]
+        new_model.time_next = current_state[1]
+        new_model.state = current_state[2]
+        new_model.old_states = [self.state_saver(new_model.time_last, 
+                                                new_model.time_next, 
                                                 new_model.state, 
                                                 0.0, 
                                                 {}, 
@@ -422,7 +421,7 @@ class BaseSimulator(Solver):
         :param timestamp: simulation time at which the message is sent
         :param color: color of the message being sent (for Mattern's algorithm)
         """
-        self.msgSent += 1
+        self.msg_sent += 1
         self.V[color][destination] = self.V[color].get(destination, 0) + 1
         if color == 1 or color == 3:
             self.Tmin = min(self.Tmin, timestamp)
@@ -435,7 +434,7 @@ class BaseSimulator(Solver):
         :param color: the color of the received message (for Mattern's algorithm)
         """
         #assert debug("Received message with color: " + str(color))
-        self.msgRecv += 1
+        self.msg_recv += 1
         self.V[color][self.name] = self.V[color].get(self.name, 0) - 1
         self.Vchange[color].set()
 
@@ -447,7 +446,7 @@ class BaseSimulator(Solver):
         :param vector: the vector number to wait for. Should be 0 for colors 0 and 1, should be 1 for colors 2 and 3.
         """
         while not (self.V[vector].get(self.name, 0) + 
-                   self.controlmsg[2].get(self.name, 0) <= 0):
+                   self.control_msg[2].get(self.name, 0) <= 0):
             self.Vlock.release()
             # Use an event to prevent busy looping
             self.Vchange[vector].wait()
@@ -462,11 +461,11 @@ class BaseSimulator(Solver):
 
         This code implements Mattern's algorithm with a slight modification: it uses 4 different colours to distinguish two subsequent runs. Furthermore, it always requires 2 complete passes before a GVT is found.
         """
-        self.controlmsg = msg
-        m_clock = self.controlmsg[0]
-        m_send = self.controlmsg[1]
-        waiting_vector = self.controlmsg[2]
-        accumulating_vector = self.controlmsg[3]
+        self.control_msg = msg
+        m_clock = self.control_msg[0]
+        m_send = self.control_msg[1]
+        waiting_vector = self.control_msg[2]
+        accumulating_vector = self.control_msg[3]
 
         with self.Vlock:
             prevcolor = 3 if self.color == 0 else self.color - 1
@@ -486,10 +485,10 @@ class BaseSimulator(Solver):
                 if GVT < self.GVT:
                     raise DEVSException("GVT is decreasing")
                 self.accumulator = waiting_vector
-                useLastState = self.relocator.useLastStateOnly()
+                use_last_state = self.relocator.useLastStateOnly()
                 self.getProxy(self.name).setGVT(GVT, 
                                                 [], 
-                                                useLastState)
+                                                use_last_state)
                 return
             else:
                 self.waitUntilOK(prevcolor)
@@ -497,7 +496,7 @@ class BaseSimulator(Solver):
                 addDict(accumulating_vector, self.V[color])
                 self.V[prevcolor] = {}
                 self.V[color] = {}
-                if not self.prevtimefinished:
+                if not self.prevtime_finished:
                     localtime = self.prevtime[0]
                 else:
                     localtime = float('inf')
@@ -508,22 +507,22 @@ class BaseSimulator(Solver):
                        accumulating_vector]
                 self.Tmin = float('inf')
             self.color = (self.color + 1) % 4
-        self.nextLP.receiveControl(msg)
+        self.next_LP.receiveControl(msg)
 
     def setIrreversible(self):
         """
         Mark this node as **temporary** irreversible, meaning that it can simply be made reversible later on. 
         This can be used when all nodes are ran at a single node due to relocation, though future relocations might again move some nodes away.
         """
-        self.temporaryIrreversible = True
+        self.temporary_irreversible = True
 
     def unsetIrreversible(self):
         """
         Unmark this node as **temporary** irreversible.
         """
-        self.temporaryIrreversible = False
+        self.temporary_irreversible = False
 
-    def setGVT(self, GVT, activities, lastStateOnly):
+    def setGVT(self, GVT, activities, last_state_only):
         """
         Sets the GVT of this simulation kernel. This value should not be smaller than
         the current GVT (this would be impossible for a correct GVT calculation). Also
@@ -532,7 +531,7 @@ class BaseSimulator(Solver):
 
         :param GVT: the desired GVT
         :param activities: the activities of all seperate nodes as a list
-        :param lastStateOnly: whether or not all states should be considered or only the last
+        :param last_state_only: whether or not all states should be considered or only the last
         """
         # GVT is just a time, it does not contain an age field!
         #assert debug("Got setGVT")
@@ -546,27 +545,28 @@ class BaseSimulator(Solver):
             #   if the value stays the same, we can stop immediately
             #assert info("Set GVT to %s" % GVT)
 
-            if self.initialAllocator is not None:
-                if GVT >= self.initialAllocator.getTerminationTime():
+            if self.initial_allocator is not None:
+                if GVT >= self.initial_allocator.getTerminationTime():
                     # The initial allocator period is over, so switch to normal simulation
                     relocs = self.getInitialAllocations()
                     # Possibly, the locations are altered, so reset everything
-                    for model in self.model.componentSet:
+                    for model in self.model.component_set:
                         model.location = 0
+                    # Function pointers, so CamelCase
                     self.atomicOutputGeneration = self.atomicOutputGeneration_backup
                     self.performRelocationsInit(relocs)
                 # Clear activities for now, as we don't want activity relocation medling in our affairs
                 activities = []
 
             if activities:
-                if self.oldGVT == -float('inf'):
-                    self.oldGVT = 0.
-                horizon = self.GVT - self.oldGVT
-                if self.GVT != self.oldGVT and activities[0][1] is not None:
+                if self.old_GVT == -float('inf'):
+                    self.old_GVT = 0.
+                horizon = self.GVT - self.old_GVT
+                if self.GVT != self.old_GVT and activities[0][1] is not None:
                     f = open("activity-log", 'a')
-                    f.write(str((self.GVT - self.oldGVT)/2 + self.oldGVT))
+                    f.write(str((self.GVT - self.old_GVT) / 2 + self.old_GVT))
                     for _, a in activities:
-                        f.write(" %s" % (a/horizon))
+                        f.write(" %s" % (a / horizon))
                     f.write("\n")
                     f.close()
                 self.findAndPerformRelocations(GVT, activities, horizon)
@@ -575,57 +575,57 @@ class BaseSimulator(Solver):
             self.GVTdone()
             return
 
-        self.simlockRequest = True
+        self.simlock_request = True
         with self.simlock:
-            self.simlockRequest = False
+            self.simlock_request = False
             #assert debug("Set GVT to " + str(GVT))
-            self.oldGVT = self.GVT
+            self.old_GVT = self.GVT
             self.GVT = GVT
 
             nqueue = []
-            self.inputScheduler.cleanup((GVT, 1))
+            self.input_scheduler.cleanup((GVT, 1))
 
             self.performActions(GVT)
 
             found = False
-            for index in range(len(self.outputQueue)):
-                if self.outputQueue[index].timestamp[0] >= GVT:
+            for index in range(len(self.output_queue)):
+                if self.output_queue[index].timestamp[0] >= GVT:
                     found = True
-                    self.outputQueue = self.outputQueue[index:]
+                    self.output_queue = self.output_queue[index:]
                     break
             if not found:
-                self.outputQueue = []
+                self.output_queue = []
 
             self.activities = {}
-            self.model.setGVT(GVT, self.activities, lastStateOnly)
-            addDict(self.totalActivities, self.activities)
-            if self.temporaryIrreversible:
+            self.model.setGVT(GVT, self.activities, last_state_only)
+            addDict(self.total_activities, self.activities)
+            if self.temporary_irreversible:
                 #print("Setting new state for %s models" % len(self.model.componentSet))
-                for model in self.model.componentSet:
-                    activity = self.totalActivities[model.model_id]
-                    model.oldStates = [self.state_saver(model.timeLast, 
-                                                        model.timeNext, 
-                                                        model.state, 
-                                                        activity, 
-                                                        None, 
-                                                        None)]
+                for model in self.model.component_set:
+                    activity = self.total_activities[model.model_id]
+                    model.old_states = [self.state_saver(model.time_last,
+                                                         model.time_next, 
+                                                         model.state, 
+                                                         activity, 
+                                                         None, 
+                                                         None)]
                 #TODO this is commented...
                 #self.totalActivities = defaultdict(float)
             # Make a checkpoint too
-            if self.checkpointCounter == self.checkpointFreq:
+            if self.checkpoint_counter == self.checkpoint_freq:
                 self.checkpoint()
-                self.checkpointCounter = 0
+                self.checkpoint_counter = 0
             else:
-                self.checkpointCounter += 1
+                self.checkpoint_counter += 1
 
         # Move the pending activities
-        if lastStateOnly:
-            activitySum = None
+        if last_state_only:
+            activity_sum = None
         else:
-            activitySum = sum(self.activities.values())
+            activity_sum = sum(self.activities.values())
 
-        activities.append((self.name, activitySum))
-        self.nextLP.setGVT(GVT, activities, lastStateOnly)
+        activities.append((self.name, activity_sum))
+        self.next_LP.setGVT(GVT, activities, last_state_only)
 
     def revert(self, time):
         """
@@ -649,9 +649,9 @@ class BaseSimulator(Solver):
         if self.doSomeTracing:
             self.getProxy(0).removeActions(self.model.local_model_ids, time)
         # Also revert the input message scheduler
-        self.inputScheduler.revert(time)
+        self.input_scheduler.revert(time)
         # Now revert all local models
-        controllerRevert = self.model.revert(time, self.memoization)
+        controller_revert = self.model.revert(time, self.memoization)
         #assert debug("Reverted all models")
 
         self.clock = self.prevtime = time
@@ -672,12 +672,12 @@ class BaseSimulator(Solver):
             else:
                 #assert debug("NOT invalidating " + str(value.uuid))
                 end = index
-        self.outputQueue = self.outputQueue[:end+1]
+        self.output_queue = self.output_queue[:end+1]
 
         try:
-            self.blockOutgoing = self.outputQueue[-1].timestamp
+            self.block_outgoing = self.output_queue[-1].timestamp
         except IndexError:
-            self.blockOutgoing = None
+            self.block_outgoing = None
 
         # Don't need the Vlock here, as we already have it
         for model_id in unschedules:
@@ -693,7 +693,7 @@ class BaseSimulator(Solver):
                                                            self.color)
 
         # Controller has read one of the reverted states, so force a rollback there
-        if controllerRevert:
+        if controller_revert:
             self.notifySend(0, time[0], self.color)
             self.getProxy(0).receiveAntiMessages(time, None, [], self.color)
         self.shouldrun.set()
@@ -706,7 +706,7 @@ class BaseSimulator(Solver):
         :param timestamp: timestamp of the message
         :param content: content of the message being sent
         """
-        if self.blockOutgoing == timestamp and (not self.checkpoint_restored):
+        if self.block_outgoing == timestamp and (not self.checkpoint_restored):
             # If the model was just reverted, we don't need to sent out these 
             # messages because they are already in the receivers queues.
             #assert debug("Not sending message " + str(timestamp))
@@ -727,7 +727,7 @@ class BaseSimulator(Solver):
         # The message should be saved, though it should not be a copy. This is because the middleware will make
         # a copy itself, making this old message unused. Furthermore, the receiver will always create a copy
         # of the message to be safe, making a copy at the source unnecessary
-        self.outputQueue.append(msg)
+        self.output_queue.append(msg)
 
         self.getProxy(remote_location).receive(msg)
 
@@ -743,7 +743,7 @@ class BaseSimulator(Solver):
         # NOTE ports could change at run-time, though this is not a problem in distributed simulation!
         # NOTE no need for locking, as all methods of a deque object is atomic
         self.inqueue.append(msg)
-        self.shouldrun.set()
+        self.should_run.set()
 
     def processIncommingMessages(self):
         """
@@ -771,15 +771,15 @@ class BaseSimulator(Solver):
                 # Timestamp is before the prevtime
                 # so set the prevtime back in the past
                 self.revert(msg.timestamp)
-            elif self.prevtimefinished:
+            elif self.prevtime_finished:
                 # The prevtime is irrelevant, as we have finished simulation
                 self.prevtime = msg.timestamp
-            self.prevtimefinished = False
+            self.prevtime_finished = False
             self.notifyReceive(msg.color)
 
             # Now the message is an 'ordinary' message, just schedule it for processing
-            self.inputScheduler.schedule(msg)
-            self.model.timeNext = min(self.model.timeNext, msg.timestamp)
+            self.input_scheduler.schedule(msg)
+            self.model.time_next = min(self.model.time_next, msg.timestamp)
 
     def receiveAntiMessages(self, mintime, model_id, uuids, color):
         """
@@ -814,13 +814,13 @@ class BaseSimulator(Solver):
                         # Timestamp is before the prevtime
                         # so set the prevtime back in the past
                         self.revert(mintime)
-                    elif self.prevtimefinished:
+                    elif self.prevtime_finished:
                         # The prevtime is irrelevant, as we have finished simulation
                         self.prevtime = mintime
-                    self.prevtimefinished = False
+                    self.prevtime_finished = False
                     self.notifyReceive(color)
                     if model_id is not None:
-                        self.inputScheduler.massUnschedule(uuids)
+                        self.input_scheduler.massUnschedule(uuids)
         finally:
             with self.priorlock:
                 self.priorcount -= 1
@@ -845,9 +845,9 @@ class BaseSimulator(Solver):
             raise DEVSException("Maximal number of 0 timeAdvance loops detected")
         if self.termination_time_check:
             # Finish at the termination time
-            if self.model.timeNext > self.termination_time:
+            if self.model.time_next > self.termination_time:
                 try:
-                    timestamp = self.inputScheduler.readFirst().timestamp
+                    timestamp = self.input_scheduler.readFirst().timestamp
                     return timestamp > self.termination_time
                 except IndexError:
                     # No message waiting to be processed, so finished
@@ -973,11 +973,11 @@ class BaseSimulator(Solver):
     def setGlobals(self, 
                    address, 
                    loglevel, 
-                   checkpointfrequency, 
-                   checkpointname, 
+                   checkpoint_frequency, 
+                   checkpoint_name, 
                    statesaver, 
                    kernels, 
-                   msgCopy, 
+                   msg_copy, 
                    memoization, 
                    tracers):
         """
@@ -985,22 +985,22 @@ class BaseSimulator(Solver):
 
         :param address: address of the syslog server
         :param loglevel: level of logging library
-        :param checkpointfrequency: frequency at which checkpoints should be made
-        :param checkpointname: name of the checkpoint to save
+        :param checkpoint_frequency: frequency at which checkpoints should be made
+        :param checkpoint_name: name of the checkpoint to save
         :param statesaver: statesaving method
         :param kernels: number of simulation kernels in total
-        :param msgcopy: message copy method
+        :param msg_copy: message copy method
         :param memoization: use memoization or not
         """
         for tracer in tracers:
             self.tracers.registerTracer(tracer, self.server, self.checkpoint_restored)
-        self.doSomeTracing = self.tracers.hasTracers()
+        self.do_some_tracing = self.tracers.hasTracers()
         self.address = address
         self.loglevel = loglevel
         self.kernels = kernels
-        self.nextLP = self.getProxy((self.name + 1) % kernels)
+        self.next_LP = self.getProxy((self.name + 1) % kernels)
         self.irreversible = self.kernels == 1
-        self.temporaryIrreversible = self.irreversible
+        self.temporary_irreversible = self.irreversible
         state_saving_options = {0: DeepCopyState, 
                                 1: PickleZeroState, 
                                 2: PickleHighestState, 
@@ -1011,11 +1011,11 @@ class BaseSimulator(Solver):
         self.state_saver = state_saving_options[statesaver]
         # Save the integer value for checkpointing
         self.state_saving = statesaver
-        self.msgCopy = msgCopy
+        self.msg_copy = msg_copy
         setLogger(self.name, address, loglevel)
-        self.CHK_name = checkpointname
-        self.checkpointFreq = checkpointfrequency
-        self.checkpointCounter = 0
+        self.checkpoint_name = checkpoint_name
+        self.checkpoint_freq = checkpoint_frequency
+        self.checkpoint_counter = 0
         self.memoization = memoization
 
     def processMessage(self, clock):
@@ -1026,7 +1026,7 @@ class BaseSimulator(Solver):
         :returns: timestamp of the next transition, taking into account external messages
         """
         try:
-            message = self.inputScheduler.readFirst()
+            message = self.input_scheduler.readFirst()
         except IndexError:
             # No input messages
             return clock
@@ -1037,12 +1037,12 @@ class BaseSimulator(Solver):
             while (abs(clock[0] - message.timestamp[0]) < EPSILON and 
                     (clock[1] == message.timestamp[1])):
                 for port in message.content:
-                    aDEVS = port.hostDEVS
+                    aDEVS = port.host_DEVS
                     content = message.content[port]
                     aDEVS.myInput.setdefault(port, []).extend(content)
                     self.transitioning[aDEVS] |= 2
-                self.inputScheduler.removeFirst()
-                message = self.inputScheduler.readFirst()
+                self.input_scheduler.removeFirst()
+                message = self.input_scheduler.readFirst()
         except IndexError:
             # At the end of the scheduler, so we are done
             pass
@@ -1057,22 +1057,22 @@ class BaseSimulator(Solver):
         # NOTE a scale of 2 means that simulation will take twice as long
         self.performActions()
         # Wait for the determined period of time
-        currentRTTime = (time.time() - self.rt_zerotime)
-        scaledRTTime = currentRTTime / self.realtimeScale
-        self.asynchronousGenerator.checkInterrupt(scaledRTTime)
-        nextSimTime = min(self.model.timeNext[0], 
+        current_realtime_time = (time.time() - self.rt_zerotime)
+        scaled_realtime_time = current_realtime_time / self.realtime_scale
+        self.asynchronous_generator.checkInterrupt(scaled_realtime_time)
+        next_sim_time = min(self.model.time_next[0], 
                           self.termination_time[0], 
-                          self.asynchronousGenerator.getNextTime())
+                          self.asynchronous_generator.getNextTime())
         # Scaled realtime
-        nextSimTime *= self.realtimeScale
+        next_sim_time *= self.realtime_scale
 
         # Subtract the time that we already did our computation
-        waitTime = nextSimTime - currentRTTime
-        interrupt = self.threadingBackend.getInterrupt()
+        wait_time = next_sim_time - current_realtime_time
+        interrupt = self.threading_backend.getInterrupt()
         if interrupt is not None:
             try:
-                portname, eventValue = interrupt.split(" ")
-                eventPort = self.portmap[portname]
+                portname, event_value = interrupt.split(" ")
+                event_port = self.portmap[portname]
             except ValueError:
                 # Couldn't split, means we should stop
                 import sys
@@ -1080,21 +1080,21 @@ class BaseSimulator(Solver):
             # Process the input
             #NOTE no distinction between PDEVS and CDEVS is necessary, as CDEVS is internally handled just like PDEVS
             #     wrappers are provided to 'unpack' the list structure
-            msg = {eventPort: [eventValue]}
-            eventPort.hostDEVS.myInput = msg
-            self.transitioning[eventPort.hostDEVS] = 2
-            timediff = time.time() - self.rt_zerotime
-            self.model.timeNext = (timediff / self.realtimeScale, 1)
+            msg = {event_port: [event_value]}
+            event_port.host_DEVS.myInput = msg
+            self.transitioning[event_port.host_DEVS] = 2
+            time_diff = time.time() - self.rt_zerotime
+            self.model.time_next = (time_diff / self.realtime_scale, 1)
             # Transition
             return False
-        elif waitTime <= 0:
+        elif wait_time <= 0:
             # Transition
             #NOTE actually, we should set the timeNext here too...
             #     otherwise we will always have a 'perfect' timeNext
             return False
         else:
             # We have to wait some more for the next time
-            self.threadingBackend.wait(waitTime, self.runsim)
+            self.threading_backend.wait(wait_time, self.runsim)
             # Don't transition but stop
             return True
 
@@ -1117,35 +1117,35 @@ class BaseSimulator(Solver):
             # Only do the check here, after setting the next time of the simulation
             
             # All priority threads are cleared, so obtain the simulation lock ourself
-            while self.simlockRequest:
+            while self.simlock_request:
                 time.sleep(0.00001)
             with self.simlock:
                 if self.check():
-                    self.prevtimefinished = True
+                    self.prevtime_finished = True
                     break
                 # Process all incomming messages
                 if not self.irreversible:
                     # Check the external messages only if there is a possibility for them to arrive
                     # This is a slight optimisation for local simulation
-                    tn = self.processMessage(self.model.timeNext)
+                    tn = self.processMessage(self.model.time_next)
                 else:
-                    tn = self.model.timeNext
+                    tn = self.model.time_next
                 if tn[0] == float('inf'):
                     # Always break, even if the terminiation condition/time was wrong
                     self.transitioning = defaultdict(int)
-                    self.prevtimefinished = True
+                    self.prevtime_finished = True
                     break
                 cDEVS = self.model
                 # Round of the current clock time, which is necessary for revertions later on
-                self.currentclock = (round(tn[0], 6), tn[1])
+                self.current_clock = (round(tn[0], 6), tn[1])
 
                 # Don't interrupt the output generation, as these nodes WILL be marked as 'sent'
                 with self.Vlock:
-                    reschedule = self.coupledOutputGeneration(self.currentclock)
+                    reschedule = self.coupledOutputGeneration(self.current_clock)
                 try:
-                    self.massAtomicTransitions(self.transitioning, self.currentclock)
+                    self.massAtomicTransitions(self.transitioning, self.current_clock)
                     cDEVS.scheduler.massReschedule(reschedule)
-                    if self.useDSDEVS:
+                    if self.use_DSDEVS:
                         # Check for dynamic structure simulation
                         self.performDSDEVS(self.transitioning)
                 except QuickStopException:
@@ -1162,20 +1162,20 @@ class BaseSimulator(Solver):
                     # Clear all transitioning elements
                     self.transitioning = defaultdict(int)
                     # No longer block any output messages
-                    self.blockOutgoing = None
+                    self.block_outgoing = None
 
                     # self.clock now contains the time at which NO messages were sent
-                    self.prevtime = self.currentclock
-                    self.clock = self.model.timeNext
+                    self.prevtime = self.current_clock
+                    self.clock = self.model.time_next
 
-    def finishRing(self, msgSent, msgRecv, firstRun=False):
+    def finishRing(self, msg_sent, msg_recv, first_run=False):
         """
         Go over the ring and ask each kernel whether it is OK to stop simulation
         or not. Uses a count to check that no messages are yet to be processed.
 
-        :param msgSent: current counter for total amount of sent messages
-        :param msgRecv: current counter for total amount of received messages
-        :param firstRun: whether or not to forward at the controller
+        :param msg_sent: current counter for total amount of sent messages
+        :param msg_recv: current counter for total amount of received messages
+        :param first_run: whether or not to forward at the controller
         :returns: int -- amount of messages received and sent (-1 signals running simulation)
         """
         #NOTE due to the MPI backend changing None to 0, we need to return something else, like a -1...
@@ -1187,10 +1187,10 @@ class BaseSimulator(Solver):
             if self.shouldrun.isSet():
                 # We should still run
                 return -1
-            elif self.name == 0 and not firstRun:
+            elif self.name == 0 and not first_run:
                 # We are done, so return if they are equal
-                if msgSent == msgRecv:
-                    return msgSent
+                if msg_sent == msg_recv:
+                    return msg_sent
                 else:
                     # Some messages are not yet received, so not correct
                     return -1
@@ -1198,8 +1198,8 @@ class BaseSimulator(Solver):
             # Always release the simlock when we got it
             self.simlock.release()
         # Ask the next node for its situation
-        return self.nextLP.finishRing(self.msgSent + msgSent, 
-                                      self.msgRecv + msgRecv)
+        return self.next_LP.finishRing(self.msg_sent + msg_sent, 
+                                       self.msg_recv + msg_recv)
 
     def checkpoint(self):
         """
@@ -1209,7 +1209,7 @@ class BaseSimulator(Solver):
         """
         # pdc = PythonDevs Checkpoint
         outfile = open("%s_%s_%s.pdc" 
-                       % (self.CHK_name, round(self.GVT, 2), self.name), 'w')
+                       % (self.checkpoint_name, round(self.GVT, 2), self.name), 'w')
         # If the model was flattened when it was sent to this node, we will also need to flatten it while checkpointing
         if self.flattened:
             self.model.flattenConnections()
@@ -1227,7 +1227,7 @@ class BaseSimulator(Solver):
         self.transitioning = defaultdict(int)
         self.V = [{}, {}, {}, {}]
         self.Tmin = float('inf')
-        self.controlmsg = None
+        self.control_msg = None
         self.waiting = 0
         self.checkpoint_restored = True
 
@@ -1238,17 +1238,17 @@ class BaseSimulator(Solver):
                         loglevel=self.loglevel, 
                         tracers=tracerlist,
                         memoization=self.memoization,
-                        checkpointname = self.CHK_name,
-                        checkpointfrequency=self.checkpointFreq, 
+                        checkpoint_name = self.checkpoint_name,
+                        checkpoint_frequency=self.checkpoint_freq, 
                         statesaver=self.state_saving, 
                         kernels=self.kernels,
-                        msgCopy=self.msgCopy)
+                        msg_copy=self.msg_copy)
         # Still unflatten the model if it was flattened (due to pickling limit)
         if self.flattened:
             self.model.unflattenConnections()
 
-        self.msgSent = 0
-        self.msgRecv = 0
+        self.msg_sent = 0
+        self.msg_recv = 0
         self.priorcount = 0
         self.priorevent = threading.Event()
         self.priorevent.set()
@@ -1258,12 +1258,12 @@ class BaseSimulator(Solver):
 
         # Just perform a revertion
         # but clear the queues first
-        self.outputQueue = []
+        self.output_queue = []
         # and the inputQueue, since every model will be reset to GVT
         #  everything that happens before GVT can be cleared by revertion
         #  everything that happens after GVT will be replicated by the external models
         # Useful, since this also allows us to skip saving all this info in the pickled data
-        self.inputScheduler = MessageScheduler()
+        self.input_scheduler = MessageScheduler()
         self.actions = []
         with self.Vlock:
             self.revert((self.GVT, 0))
@@ -1279,14 +1279,14 @@ class BaseSimulator(Solver):
         Simulate at this kernel
         """
         import thread
-        hadLock = not self.simlock.acquire(False)
-        if hadLock:
+        had_lock = not self.simlock.acquire(False)
+        if had_lock:
             # We already had the lock, so normal simulation
             # Send the init message
             if self.GVT == -float('inf'):
                 # To make sure that the GVT algorithm won't start already and see that this
                 # model has nothing to simulate
-                self.model.timeNext = (0, 0)
+                self.model.time_next = (0, 0)
                 self.coupledInit()
         else:
             # We didn't have the lock yet, so this is a continueing simulation
@@ -1298,7 +1298,7 @@ class BaseSimulator(Solver):
 
         if self.realtime:
             self.runsim()
-            self.simFinish.set()
+            self.sim_finish.set()
             return
 
         while 1:
@@ -1310,7 +1310,7 @@ class BaseSimulator(Solver):
             self.shouldrun.clear()
             if self.finished:
                 break
-        self.simFinish.set()
+        self.sim_finish.set()
 
     def setAttr(self, model_id, attr, value):
         """
@@ -1369,14 +1369,14 @@ class BaseSimulator(Solver):
         """
         return self.model_ids[model_id].state
 
-    def getStateAtTime(self, model_id, requestTime):
+    def getStateAtTime(self, model_id, request_time):
         """
         Gets the state of a model at a specific time
 
         :param model_id: model_id of which the state should be fetched
-        :param requestTime: time of the state
+        :param request_time: time of the state
         """
-        return self.model_ids[model_id].getState(requestTime, False)
+        return self.model_ids[model_id].getState(request_time, False)
 
     def genUUID(self):
         """
@@ -1384,8 +1384,8 @@ class BaseSimulator(Solver):
 
         :returns: string -- a unique string for the specific name and number of sent messages
         """
-        self.sendmsgcounter += 1
-        return "%s-%s" % (self.name, self.sendmsgcounter)
+        self.send_msg_counter += 1
+        return "%s-%s" % (self.name, self.send_msg_counter)
 
     def getLocation(self, model_id):
         """
@@ -1427,10 +1427,10 @@ class BaseSimulator(Solver):
         if not self.irreversible:
             activities = {}
             self.model.fetchActivity(time, activities)
-            addDict(activities, self.totalActivities)
+            addDict(activities, self.total_activities)
             return activities
         else:
-            return self.totalActivities
+            return self.total_activities
 
     def recomputeTA(self, model_id, time):
         """
@@ -1442,10 +1442,10 @@ class BaseSimulator(Solver):
         if hasattr(self.model, "scheduler"):
             model = self.model_ids[model_id]
             # Termination time will always be correct
-            model.elapsed = time - model.timeLast[0]
+            model.elapsed = time - model.time_last[0]
             ta = model.timeAdvance()
-            model.timeNext = (time + model.elapsed + ta, 1)
-            if model.timeNext[0] < time:
+            model.time_next = (time + model.elapsed + ta, 1)
+            if model.time_next[0] < time:
                 raise DEVSException("Model user modification causes a transition in the past")
             self.model.scheduler.massReschedule([model])
             self.model.setTimeNext()

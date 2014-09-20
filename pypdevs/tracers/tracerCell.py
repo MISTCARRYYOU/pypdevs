@@ -97,7 +97,7 @@ class TracerCell(object):
                                  aDEVS, 
                                  [aDEVS.x, 
                                     aDEVS.y, 
-                                    aDEVS.timeLast, 
+                                    aDEVS.time_last, 
                                     toStr(aDEVS.state.toCellState())])
         except AttributeError:
             pass
@@ -114,7 +114,7 @@ class TracerCell(object):
                                  aDEVS, 
                                  [aDEVS.x, 
                                     aDEVS.y, 
-                                    aDEVS.timeLast, 
+                                    aDEVS.time_last, 
                                     toStr(aDEVS.state.toCellState())])
         except AttributeError:
             pass
@@ -131,7 +131,7 @@ class TracerCell(object):
                                  aDEVS, 
                                  [aDEVS.x, 
                                     aDEVS.y, 
-                                    aDEVS.timeLast, 
+                                    aDEVS.time_last, 
                                     toStr(aDEVS.state.toCellState())])
         except AttributeError as e:
             print(e)

@@ -35,7 +35,7 @@ class Solver(object):
         Constructor
         """
         self.activities = {}
-        self.dsdevsdict = {}
+        self.dsdevs_dict = {}
 
     def atomicOutputGenerationEventTracing(self, aDEVS, time):
         """
@@ -47,7 +47,7 @@ class Solver(object):
         """
         retval = Solver.atomicOutputGeneration(self, aDEVS, time)
         for port in retval:
-            port.msgcount += len(retval[port])
+            port.msg_count += len(retval[port])
         return retval
 
     def atomicOutputGeneration(self, aDEVS, time):
@@ -58,13 +58,13 @@ class Solver(object):
         :param time: the time at which the output must be generated
         :returns: dict -- the generated output
         """
-        aDEVS.myOutput = aDEVS.outputFnc()
+        aDEVS.my_output = aDEVS.outputFnc()
 
         # Being here means that this model created output, so it triggered its internal transition
         # save this knowledge in the basesimulator for usage in the actual transition step
         self.transitioning[aDEVS] |= 1
 
-        return aDEVS.myOutput
+        return aDEVS.my_output
 
     def massAtomicTransitions(self, trans, clock):
         """
@@ -82,16 +82,16 @@ class Solver(object):
             ###########
             ## Memoization and activity tracking code
             ##   Skipped in local simulation
-            if not self.temporaryIrreversible:
+            if not self.temporary_irreversible:
                 # Memo part
                 if self.memoization and len(aDEVS.memo) >= 2:
                     found = False
                     prev = aDEVS.memo.pop()
                     memo = aDEVS.memo[-1]
-                    if memo.timeLast == clock and prev.loadState() == aDEVS.state:
+                    if memo.time_last == clock and prev.loadState() == aDEVS.state:
                         if ttype == 1:
                             found = True
-                        elif aDEVS.myInput == memo.myInput:
+                        elif aDEVS.my_input == memo.my_input:
                             # Inputs should be equal too
                             if ttype == 3:
                                 found = True
@@ -99,11 +99,11 @@ class Solver(object):
                                 found = True
                     if found:
                         aDEVS.state = memo.loadState()
-                        aDEVS.timeLast = clock
-                        aDEVS.timeNext = memo.timeNext
+                        aDEVS.time_last = clock
+                        aDEVS.time_next = memo.time_next
                         # Just add the copy
-                        aDEVS.oldStates.append(memo)
-                        if self.doSomeTracing:
+                        aDEVS.old_states.append(memo)
+                        if self.do_some_tracing:
                             # Completely skip all these calls if no tracing, saves us a lot of function calls
                             if ttype == 1:
                                 self.tracers.tracesInternal(aDEVS)
@@ -111,32 +111,32 @@ class Solver(object):
                                 self.tracers.tracesExternal(aDEVS)
                             elif ttype == 3:
                                 self.tracers.tracesConfluent(aDEVS)
-                        aDEVS.myInput = {}
-                        if self.relocationPending:
+                        aDEVS.my_input = {}
+                        if self.relocation_pending:
                             # Quit ASAP by throwing an exception
                             raise QuickStopException()
                         continue
                     else:
                         aDEVS.memo = []
-                activityTrackingPreValue = aDEVS.preActivityCalculation()
+                activity_tracking_prevalue = aDEVS.preActivityCalculation()
             elif self.activityTracking:
-                activityTrackingPreValue = aDEVS.preActivityCalculation()
+                activity_tracking_prevalue = aDEVS.preActivityCalculation()
             ###########
 
             # Make a copy of the message before it is passed to the user
-            if self.msgCopy != 2:
+            if self.msg_copy != 2:
                 # Prevent a pass statement, which still consumes some time in CPython
-                if self.msgCopy == 1:
+                if self.msg_copy == 1:
                     # Using list comprehension inside of dictionary comprehension...
-                    aDEVS.myInput = {key: 
-                            [i.copy() for i in aDEVS.myInput[key]] 
-                            for key in aDEVS.myInput}
-                elif self.msgCopy == 0:
+                    aDEVS.my_input = {key: 
+                            [i.copy() for i in aDEVS.my_input[key]] 
+                            for key in aDEVS.my_input}
+                elif self.msg_copy == 0:
                     # Dictionary comprehension
-                    aDEVS.myInput = {key: 
-                            pickle.loads(pickle.dumps(aDEVS.myInput[key], 
+                    aDEVS.my_input = {key: 
+                            pickle.loads(pickle.dumps(aDEVS.my_input[key], 
                                                       pickle.HIGHEST_PROTOCOL)) 
-                            for key in aDEVS.myInput}
+                            for key in aDEVS.my_input}
 
             # NOTE ttype mappings:            (EI)
             #       1 -- Internal transition  (01)
@@ -147,19 +147,19 @@ class Solver(object):
                 aDEVS.state = aDEVS.intTransition()
             elif ttype == 2:
                 # External only
-                aDEVS.elapsed = t - aDEVS.timeLast[0]
-                aDEVS.state = aDEVS.extTransition(aDEVS.myInput)
+                aDEVS.elapsed = t - aDEVS.time_last[0]
+                aDEVS.state = aDEVS.extTransition(aDEVS.my_input)
             elif ttype == 3:
                 # Confluent
                 aDEVS.elapsed = 0.
-                aDEVS.state = aDEVS.confTransition(aDEVS.myInput)
+                aDEVS.state = aDEVS.confTransition(aDEVS.my_input)
             else:
                 raise DEVSException(
                     "Problem in transitioning dictionary: unknown element %s" 
                     % ttype)
 
             ta = aDEVS.timeAdvance()
-            aDEVS.timeLast = clock
+            aDEVS.time_last = clock
 
             if ta < 0:
                 raise DEVSException("Negative time advance in atomic model '" + \
@@ -167,35 +167,35 @@ class Solver(object):
                                     str(ta) + " at time " + str(t))
 
             # Update the time, this is just done in the timeNext, as this will propagate to the basesimulator
-            aDEVS.timeNext = (t + ta, 1 if ta else (age + 1))
+            aDEVS.time_next = (t + ta, 1 if ta else (age + 1))
 
             # Save the state
-            if not self.temporaryIrreversible:
+            if not self.temporary_irreversible:
                 partialmod.append(aDEVS)
                 # But only if there are multiple kernels, since otherwise there would be no other kernel to invoke a revertion
                 # This can save us lots of time for local simulation (however, all other code is written with parallellisation in mind...)
-                activity = aDEVS.postActivityCalculation(activityTrackingPreValue)
-                aDEVS.oldStates.append(self.state_saver(aDEVS.timeLast, 
-                                                        aDEVS.timeNext, 
-                                                        aDEVS.state, 
-                                                        activity,
-                                                        aDEVS.myInput, 
-                                                        aDEVS.elapsed))
-                if self.relocationPending:
+                activity = aDEVS.postActivityCalculation(activity_tracking_prevalue)
+                aDEVS.old_states.append(self.state_saver(aDEVS.time_last,
+                                                         aDEVS.time_next,
+                                                         aDEVS.state,
+                                                         activity,
+                                                         aDEVS.my_input,
+                                                         aDEVS.elapsed))
+                if self.relocation_pending:
                     # Quit ASAP by throwing an exception
                     for m in partialmod:
                         # Roll back these models to before the transitions
-                        m.timeNext = m.oldStates[-1].timeNext
-                        m.timeLast = m.oldStates[-1].timeLast
-                        m.state = m.oldStates[-1].loadState()
+                        m.time_next = m.old_states[-1].time_next
+                        m.time_last = m.old_states[-1].time_last
+                        m.state = m.old_states[-1].loadState()
                     self.model.scheduler.massReschedule(trans)
                     self.server.flushQueuedMessages()
                     raise QuickStopException()
-            elif self.activityTracking:
-                activity = aDEVS.postActivityCalculation(activityTrackingPreValue)
-                self.totalActivities[aDEVS.model_id] += activity
+            elif self.activity_tracking:
+                activity = aDEVS.postActivityCalculation(activity_tracking_prevalue)
+                self.total_activities[aDEVS.model_id] += activity
 
-            if self.doSomeTracing:
+            if self.do_some_tracing:
                 # Completely skip all these calls if no tracing, saves us a lot of function calls
                 if ttype == 1:
                     self.tracers.tracesInternal(aDEVS)
@@ -205,7 +205,7 @@ class Solver(object):
                     self.tracers.tracesConfluent(aDEVS)
       
             # Clear the bag
-            aDEVS.myInput = {}
+            aDEVS.my_input = {}
         self.server.flushQueuedMessages()
 
     def atomicInit(self, aDEVS, time):
@@ -214,22 +214,22 @@ class Solver(object):
 
         :param aDEVS: the model to initialise
         """
-        aDEVS.timeLast = (time[0]-aDEVS.elapsed, 1)
+        aDEVS.time_last = (time[0] - aDEVS.elapsed, 1)
         ta = aDEVS.timeAdvance()
 
         if ta < 0:
             raise DEVSException("Negative time advance in atomic model '" + \
                                 aDEVS.getModelFullName() + "' with value " + \
                                 str(ta) + " at initialisation")
-        aDEVS.timeNext = (aDEVS.timeLast[0] + ta, 1)
+        aDEVS.time_next = (aDEVS.time_last[0] + ta, 1)
         # Save the state
         if not self.irreversible:
-            aDEVS.oldStates.append(self.state_saver(aDEVS.timeLast, 
-                                                    aDEVS.timeNext, 
-                                                    aDEVS.state, 
-                                                    0.0, 
-                                                    {}, 
-                                                    0.0))
+            aDEVS.old_states.append(self.state_saver(aDEVS.time_last,
+                                                     aDEVS.time_next,
+                                                     aDEVS.state,
+                                                     0.0,
+                                                     {},
+                                                     0.0))
 
         # All tracing features
         self.tracers.tracesInit(aDEVS, time)
@@ -248,7 +248,7 @@ class Solver(object):
             return self.transitioning
         reschedule = set(imminent)
         for model in imminent:
-            model.timeNext = (model.timeNext[0], model.timeNext[1] + 1)
+            model.time_next = (model.time_next[0], model.time_next[1] + 1)
         # Return value are the models to reschedule
         # self.transitioning are the models that must transition
         if len(imminent) > 1:
@@ -260,28 +260,28 @@ class Solver(object):
                 # Take the model each time, as we need to make sure that the selectHierarchy is valid everywhere
                 model = pending[0]
                 # Make a set first to remove duplicates
-                colliding = list(set([m.selectHierarchy[level] for m in pending]))
-                chosen = model.selectHierarchy[level-1].select(
+                colliding = list(set([m.select_hierarchy[level] for m in pending]))
+                chosen = model.select_hierarchy[level-1].select(
                         sorted(colliding, key=lambda i:i.getModelFullName()))
                 pending = [m for m in pending 
-                             if m.selectHierarchy[level] == chosen]
+                             if m.select_hierarchy[level] == chosen]
                 level += 1
             child = pending[0]
         else:
             child = imminent[0]
         # Recorrect the timeNext of the model that will transition
-        child.timeNext = (child.timeNext[0], child.timeNext[1] - 1)
+        child.time_next = (child.time_next[0], child.time_next[1] - 1)
 
-        outbag = child.myOutput = ClassicDEVSWrapper(child).outputFnc()
+        outbag = child.my_output = ClassicDEVSWrapper(child).outputFnc()
         self.transitioning[child] = 1
 
         for outport in outbag:
-            for inport, z in outport.routingOutLine:
+            for inport, z in outport.routing_outline:
                 payload = outbag[outport]
                 if z is not None:
                     payload = [z(pickle.loads(pickle.dumps(m))) for m in payload]
-                aDEVS = inport.hostDEVS
-                aDEVS.myInput[inport] = list(payload)
+                aDEVS = inport.host_DEVS
+                aDEVS.my_input[inport] = list(payload)
                 self.transitioning[aDEVS] = 2
                 reschedule.add(aDEVS)
         # We have now generated the transitioning variable, though we need some small magic to have it work for classic DEVS
@@ -302,8 +302,8 @@ class Solver(object):
             outbag = self.atomicOutputGeneration(child, time)
             for outport in outbag:
                 payload = outbag[outport]
-                for inport, z in outport.routingOutLine:
-                    aDEVS = inport.hostDEVS
+                for inport, z in outport.routing_outline:
+                    aDEVS = inport.host_DEVS
                     if z is not None:
                         payload = [z(pickle.loads(pickle.dumps(m))) 
                                    for m in payload]
@@ -324,16 +324,16 @@ class Solver(object):
         CoupledDEVS function to initialise the model, calls all its _local_ children too.
         """
         cDEVS = self.model
-        timeNext = (float('inf'), 1)
+        time_next = (float('inf'), 1)
         # This part isn't fast, but it doesn't matter, since it just inits everything, optimizing here doesn't
         # matter as it is only called once AND every element has to be initted.
         # Only local models should receive this initialisation from us
         for d in self.local:
             self.atomicInit(d, (0.0, 0))
-            timeNext = min(timeNext, d.timeNext)
+            time_next = min(time_next, d.time_next)
         # NOTE do not immediately assign to the timeNext, as this is used in the GVT algorithm to see whether a node has finished
-        cDEVS.timeNext = timeNext
-        self.model.setScheduler(self.model.schedulerType)
+        cDEVS.time_next = time_next
+        self.model.setScheduler(self.model.scheduler_type)
         self.server.flushQueuedMessages()
 
     def performDSDEVS(self, transitioning):
@@ -346,7 +346,7 @@ class Solver(object):
         for m in transitioning:
             m.server = self
         iterlist = [aDEVS.parent for aDEVS in transitioning 
-                                 if aDEVS.modelTransition(self.dsdevsdict)]
+                                 if aDEVS.modelTransition(self.dsdevs_dict)]
         # Contains all models that are already checked, to prevent duplicate checking.
         # This was not necessary for atomic models, as they are guaranteed to only be called
         # once, as they have no children to induce a structural change on them
@@ -362,7 +362,7 @@ class Solver(object):
                 if cDEVS in checked:
                     continue
                 checked.add(cDEVS)
-                if cDEVS.modelTransition(self.dsdevsdict):
+                if cDEVS.modelTransition(self.dsdevs_dict):
                     new_iterlist.append(cDEVS.parent)
             # Don't update the iterlist while we are iterating over it
             iterlist = new_iterlist

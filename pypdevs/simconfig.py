@@ -90,7 +90,7 @@ class SimulatorConfiguration(object):
         #TODO check whether or not simulation has already happened...
         if not isinstance(allowed, bool):
             raise DEVSException("The allow local reinit call requires a boolean as parameter")
-        self.simulator.allowLocalReinit = allowed
+        self.simulator.allow_local_reinit = allowed
 
     def setManualRelocator(self):
         """
@@ -119,15 +119,15 @@ class SimulatorConfiguration(object):
             raise DEVSException("Relocation directives can only be set when using a manual relocator (the default)\nYou seem to have changed the relocator, so please revert it back by calling the 'setManualRelocator()' first!")
 
         if isinstance(model, int):
-            self.simulator.activityRelocator.addDirective(time=time, 
-                                                          model=model, 
-                                                          destination=destination)
+            self.simulator.activity_relocator.addDirective(time=time, 
+                                                           model=model, 
+                                                           destination=destination)
         elif isinstance(model, AtomicDEVS):
-            self.simulator.activityRelocator.addDirective(time=time, 
-                                                          model=model.model_id, 
-                                                          destination=destination)
+            self.simulator.activity_relocator.addDirective(time=time, 
+                                                           model=model.model_id, 
+                                                           destination=destination)
         elif isinstance(model, CoupledDEVS):
-            for m in model.componentSet:
+            for m in model.component_set:
                 self.simulator.setRelocationDirective(time, m, destination)
 
     def setRelocationDirectives(self, directives):
@@ -139,26 +139,26 @@ class SimulatorConfiguration(object):
         for directive in directives:
             self.setRelocationDirective(directive[0], directive[1], directive[2])
 
-    def setSchedulerCustom(self, filename, schedulerName, locations=None):
+    def setSchedulerCustom(self, filename, scheduler_name, locations=None):
         """
         Use a custom scheduler
 
         :param filename: filename of the file containing the scheduler class
-        :param schedulerName: class name of the scheduler contained in the file
+        :param scheduler_name: class name of the scheduler contained in the file
         :param locations: if it is an iterable, the scheduler will only be applied to these locations. If it is None, all nodes will be affected.
         """
         if not isinstance(filename, str):
             raise DEVSException("Custom scheduler filename should be a string")
-        if not isinstance(schedulerName, str):
+        if not isinstance(scheduler_name, str):
             raise DEVSException("Custom scheduler classname should be a string")
         if locations is None:
             # Set global scheduler, so overwrite all previous configs
-            self.simulator.schedulerType = (filename, schedulerName)
-            self.simulator.schedulerLocations = {}
+            self.simulator.scheduler_type = (filename, scheduler_name)
+            self.simulator.scheduler_locations = {}
         else:
             # Only for a subset of models, but keep the default scheduler
             for location in locations:
-                self.simulator.schedulerLocations[location] = (filename, schedulerName)
+                self.simulator.scheduler_locations[location] = (filename, scheduler_name)
 
     def setSchedulerActivityHeap(self, locations=None):
         """
@@ -268,18 +268,19 @@ class SimulatorConfiguration(object):
             model = model.model_id
         self.simulator.callbacks.append((variable, model))
 
-    def setDrawModel(self, drawModel=True, outputfile="model.dot", hideEdgeLabels=False):
+    def setDrawModel(self, draw_model=True, output_file="model.dot", hide_edge_labels=False):
         """
         Whether or not to draw the model and its distribution before simulation starts.
 
-        :param drawModel: whether or not to draw the model
-        :param hideEdgeLabels: whether or not to hide the labels of the connections, this speeds up the model drawing and allows for reasonably sized diagrams
+        :param draw_model: whether or not to draw the model
+        :param output_file: file to output to
+        :param hide_edge_labels: whether or not to hide the labels of the connections, this speeds up the model drawing and allows for reasonably sized diagrams
         """
         if self.simulator.setup:
             raise DEVSException("Model can only be drawn at the first simulation run due to the model being optimized before simulation")
-        self.simulator.drawModel = drawModel
-        self.simulator.drawModelFile = outputfile
-        self.simulator.hideEdgeLabels = hideEdgeLabels
+        self.simulator.draw_model = draw_model
+        self.simulator.draw_model_file = output_file
+        self.simulator.hide_edge_labels = hide_edge_labels
 
     def setFetchAllAfterSimulation(self, fetch=True):
         """
@@ -287,7 +288,7 @@ class SimulatorConfiguration(object):
 
         :param fetch: whether or not to fetch all states from all models
         """
-        self.simulator.fetchAll = fetch
+        self.simulator.fetch_all = fetch
 
     def setActivityTrackingVisualisation(self, visualize, x = 0, y = 0):
         """
@@ -301,8 +302,8 @@ class SimulatorConfiguration(object):
             raise DEVSException("Activity Tracking visualisation requires a boolean")
         if visualize and ((x > 0 and y <= 0) or (y > 0 and x <= 0)):
             raise DEVSException("Activity Tracking cell view requires both a positive x and y parameter for the maximal size of the grid")
-        self.simulator.activityVisualisation = visualize
-        self.simulator.activityTracking = visualize
+        self.simulator.activity_visualisation = visualize
+        self.simulator.activity_tracking = visualize
         self.simulator.x_size = int(x)
         self.simulator.y_size = int(y)
 
@@ -316,7 +317,7 @@ class SimulatorConfiguration(object):
         """
         if locationmap and (x <= 0 or y <= 0):
             raise DEVSException("Location cell view requires a positive x and y parameter for the maximal size of the grid")
-        self.simulator.locationCellView = locationmap
+        self.simulator.location_cell_view = locationmap
         self.simulator.x_size = int(x)
         self.simulator.y_size = int(y)
 
@@ -459,25 +460,25 @@ class SimulatorConfiguration(object):
             raise DEVSException("GVT interval should be larger than or equal to one")
         self.simulator.GVT_interval = gvt_int
 
-    def setCheckpointing(self, name, chk_int):
+    def setCheckpointing(self, name, checkpoint_interval):
         """
         .. warning:: name parameter will be used as a filename, so avoid special characters
 
         Sets the interval between 2 checkpoints in terms of GVT calculations. This option generates PDC files starting with 'name'. This is only possible when using MPI.
 
         :param name: name to prepend to each checkpoint file
-        :param chk_int: number of GVT runs that are required to trigger a checkpoint. For example 3 means that a checkpoint will be created after each third GVT calculation
+        :param checkpoint_interval: number of GVT runs that are required to trigger a checkpoint. For example 3 means that a checkpoint will be created after each third GVT calculation
         """
-        if not isinstance(chk_int, int):
+        if not isinstance(checkpoint_interval, int):
             raise DEVSException("Checkpoint interval should be an integer")
         if not isinstance(name, str):
             raise DEVSException("Checkpoint name should be a string")
-        if chk_int < 1:
+        if checkpoint_interval < 1:
             raise DEVSException("Checkpoint interval should be larger than or equal to one")
         if self.simulator.realtime:
             raise DEVSException("Checkpointing is not possible under realtime simulation")
-        self.simulator.CHK_interval = chk_int
-        self.simulator.CHK_name = name
+        self.simulator.checkpoint_interval = checkpoint_interval
+        self.simulator.checkpoint_name = name
 
     def setStateSaving(self, state_saving):
         """
@@ -554,7 +555,7 @@ class SimulatorConfiguration(object):
                 copy_method = options[copy_method]
             except IndexError:
                 raise DEVSException("Message copy option %s not recognized" % copy_method)
-        self.simulator.msgCopy = copy_method
+        self.simulator.msg_copy = copy_method
 
     def setRealTime(self, realtime = True, scale=1.0):
         """
@@ -566,19 +567,19 @@ class SimulatorConfiguration(object):
         if not local(self.simulator):
             raise DEVSException("Real time simulation is only possible in local simulation!")
         self.simulator.realtime = realtime
-        self.simulator.realtimeScale = scale
+        self.simulator.realtime_scale = scale
 
-    def setRealTimeInputFile(self, generatorfile):
+    def setRealTimeInputFile(self, generator_file):
         """
         Sets the realtime input file to use. If realtime is not yet set, this will auto-enable it.
 
-        :param generatorfile: the file to use, should be a string, NOT a file handle. None is acceptable if no file should be used.
+        :param generator_file: the file to use, should be a string, NOT a file handle. None is acceptable if no file should be used.
         """
         if not self.simulator.realtime:
             self.setRealTime(True)
-        if not isinstance(generatorfile, str) and generatorfile is not None:
+        if not isinstance(generator_file, str) and generator_file is not None:
             raise DEVSException("Realtime generator should be a string or None")
-        self.simulator.generatorfile = generatorfile
+        self.simulator.generator_file = generator_file
 
     def setRealTimePlatformThreads(self):
         """
@@ -621,20 +622,20 @@ class SimulatorConfiguration(object):
             self.setRealTime(True)
         if not isinstance(ports, dict):
             raise DEVSException("Realtime input port references should be a dictionary")
-        self.simulator.realTimeInputPortReferences = ports
+        self.simulator.realtime_port_references = ports
 
-    def setModelState(self, model, newState):
+    def setModelState(self, model, new_state):
         """
         Reinitialize the state of a certain model
 
         Calling this method will cause a recomputation of the timeAdvance for this model. Its results will be used relative to the time of the last transition.
 
         :param model: model whose state to change
-        :param newState: state to assign to the model
+        :param new_state: state to assign to the model
         """
         if not isinstance(model, int):
             model = model.model_id
-        self.simulator.modifyState(model, newState)
+        self.simulator.modifyState(model, new_state)
 
     def setModelStateAttr(self, model, attr, value):
         """
@@ -676,7 +677,7 @@ class SimulatorConfiguration(object):
             exec("from pypdevs.relocators.%s import %s" % (filename, classname))
         except:
             exec("from %s import %s" % (filename, classname))
-        self.simulator.activityRelocator = eval("%s(*args)" % classname)
+        self.simulator.activity_relocator = eval("%s(*args)" % classname)
 
     def setActivityRelocatorBasicBoundary(self, swappiness):
         """

@@ -24,14 +24,14 @@ class ThreadingGameLoop(object):
         """
         Constructor
         """
-        self.nextEvent = float('inf')
+        self.next_event = float('inf')
 
     def step(self):
         """
         Perform a step in the simulation. Actual processing is done in a seperate thread.
         """
-        if time.time() >= self.nextEvent:
-            self.nextEvent = float('inf')
+        if time.time() >= self.next_event:
+            self.next_event = float('inf')
             getattr(self, "func")()
         
     def wait(self, delay, func):
@@ -42,10 +42,10 @@ class ThreadingGameLoop(object):
         :param func: the function to call
         """
         self.func = func
-        self.nextEvent = time.time() + delay
+        self.next_event = time.time() + delay
     
     def interrupt(self):
         """
         Interrupt the waiting thread
         """
-        self.nextEvent = 0
+        self.next_event = 0

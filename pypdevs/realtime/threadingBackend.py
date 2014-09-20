@@ -26,8 +26,8 @@ class ThreadingBackend(object):
         :param subsystem: string specifying the subsystem to use: python, tkinter or loop
         :param args: all additional arguments that should be passed to the subsystem's constructor (must be a list)
         """
-        self.interruptedValue = None
-        self.valueLock = threading.Lock()
+        self.interrupted_value = None
+        self.value_lock = threading.Lock()
         if subsystem == "python":
             from pypdevs.realtime.threadingPython import ThreadingPython
             self.subsystem = ThreadingPython(*args)
@@ -55,7 +55,7 @@ class ThreadingBackend(object):
 
         :param value: the value that interrupts
         """
-        self.interruptedValue = value
+        self.interrupted_value = value
         self.subsystem.interrupt()
 
     def setInterrupt(self, value):
@@ -64,9 +64,9 @@ class ThreadingBackend(object):
         
         :param value: value with which the interrupt variable should be set
         """
-        with self.valueLock:
-            if self.interruptedValue is None:
-                self.interruptedValue = value
+        with self.value_lock:
+            if self.interrupted_value is None:
+                self.interrupted_value = value
                 return True
             else:
                 # The interrupt was already set, indicating a collision!
@@ -78,9 +78,9 @@ class ThreadingBackend(object):
 
         :returns: the interrupt
         """
-        with self.valueLock:
-            val = self.interruptedValue
-            self.interruptedValue = None
+        with self.value_lock:
+            val = self.interrupted_value
+            self.interrupted_value = None
         return val
 
     def step(self):

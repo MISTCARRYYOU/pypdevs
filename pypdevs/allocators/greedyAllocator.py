@@ -19,115 +19,115 @@ class GreedyAllocator(object):
     """
     Allocate all models in a greedy manner: make the most heavy link local and extend from there on until an average load is reached.
     """
-    def allocate(self, models, edges, nrnodes, totalActivities):
+    def allocate(self, models, edges, nr_nodes, total_activities):
         """
         Calculate allocations for the nodes, using the information provided.
 
         :param models: the models to allocte
         :param edges: the edges between the models
-        :param nrnodes: the number of nodes to allocate over. Simply an upper bound!
-        :param totalActivities: activity tracking information from each model
+        :param nr_nodes: the number of nodes to allocate over. Simply an upper bound!
+        :param total_activities: activity tracking information from each model
         :returns: allocation that was found
         """
         # Run over all edges to create the nodes and link in their edges
         nodes = {}
-        remainingEdges = set()
-        toAlloc = set()
+        remaining_edges = set()
+        to_alloc = set()
         for source in edges:
             for destination in edges[source]:
                 # A connection from 'source' to 'destination'
                 edge = edges[source][destination]
                 nodes.setdefault(source, []).append((edge, destination))
                 nodes.setdefault(destination, []).append((edge, source))
-                remainingEdges.add((edge, source, destination))
-                toAlloc.add(destination)
-            toAlloc.add(source)
+                remaining_edges.add((edge, source, destination))
+                to_alloc.add(destination)
+            to_alloc.add(source)
         # OK, nodes are constructed
 
         # Allocate 1 node too much for spilling
-        nrnodes += 1
+        nr_nodes += 1
 
         # Find average activity (our target)
-        avgActivity = sum([totalActivities[i] for i in totalActivities])/nrnodes
+        avg_activity = sum([total_activities[i] for i in total_activities]) / nr_nodes
 
         # Get the strongest edge
-        allocNode = 0
-        nodeLoad = []
+        alloc_node = 0
+        node_load = []
         allocation = {}
         allocation_rev = defaultdict(set)
-        while allocNode < (nrnodes - 1):
-            while remainingEdges:
-                maxEdge = max(remainingEdges)
-                remainingEdges.remove(maxEdge)
-                edgeWeight, source, destination = maxEdge
-                if source in toAlloc and destination in toAlloc:
+        while alloc_node < (nr_nodes - 1):
+            while remaining_edges:
+                max_edge = max(remaining_edges)
+                remaining_edges.remove(max_edge)
+                edge_weight, source, destination = max_edge
+                if source in to_alloc and destination in to_alloc:
                     break
             else:
                 break
-            activity_source = totalActivities[source.model_id]
-            activity_destination = totalActivities[destination.model_id]
-            nodeLoad.append(activity_source + activity_destination)
-            allocation[source.model_id] = allocNode
-            allocation[destination.model_id] = allocNode
-            allocation_rev[allocNode].add(source)
-            allocation_rev[allocNode].add(destination)
-            toAlloc.remove(source)
-            toAlloc.remove(destination)
-            while nodeLoad[allocNode] < averageActivity:
-                edgeSearch = []
-                for edge in remainingEdges:
-                    if ((edge[1] in allocation_rev[allocNode] and
-                         edge[2] in toAlloc) or
-                        (edge[2] in allocation_rev[allocNode] and
-                         edge[1] in toAlloc)):
-                        edgeSearch.append(edge)
-                if not edgeSearch:
+            activity_source = total_activities[source.model_id]
+            activity_destination = total_activities[destination.model_id]
+            node_load.append(activity_source + activity_destination)
+            allocation[source.model_id] = alloc_node
+            allocation[destination.model_id] = alloc_node
+            allocation_rev[alloc_node].add(source)
+            allocation_rev[alloc_node].add(destination)
+            to_alloc.remove(source)
+            to_alloc.remove(destination)
+            while node_load[alloc_node] < average_activity:
+                edge_search = []
+                for edge in remaining_edges:
+                    if ((edge[1] in allocation_rev[alloc_node] and
+                         edge[2] in to_alloc) or
+                        (edge[2] in allocation_rev[alloc_node] and
+                         edge[1] in to_alloc)):
+                        edge_search.append(edge)
+                if not edge_search:
                     break
                 # Allocate some more nodes
-                maxEdge = max(edgeSearch)
-                remainingEdges.remove(maxEdge)
-                edgeWeight, source, destination = maxEdge
+                max_edge = max(edge_search)
+                remaining_edges.remove(max_edge)
+                edge_weight, source, destination = max_edge
                 # Ok, this is an unbound connection, so add it
-                if source in toAlloc:
-                    toAlloc.remove(source)
-                    allocation[source.model_id] = allocNode
-                    allocation_rev[allocNode].add(source.model_id)
-                    nodeLoad[allocNode] += totalActivities[source.model_id]
-                if destination in toAlloc:
-                    toAlloc.remove(destination)
-                    allocation[destination.model_id] = allocNode
-                    allocation_rev[allocNode].add(destination.model_id)
-                    nodeLoad[allocNode] += totalActivities[destination.model_id]
-            allocNode += 1
+                if source in to_alloc:
+                    to_alloc.remove(source)
+                    allocation[source.model_id] = alloc_node
+                    allocation_rev[alloc_node].add(source.model_id)
+                    node_load[alloc_node] += total_activities[source.model_id]
+                if destination in to_alloc:
+                    to_alloc.remove(destination)
+                    allocation[destination.model_id] = alloc_node
+                    allocation_rev[alloc_node].add(destination.model_id)
+                    node_load[alloc_node] += total_activities[destination.model_id]
+            alloc_node += 1
 
         # All unassigned nodes are for the spill node
         # Undo our spilling node
-        while toAlloc:
+        while to_alloc:
             changes = False
-            n = list(toAlloc)
+            n = list(to_alloc)
             for model in n:
                 options = set()
                 for oport in model.OPorts:
-                    for oline, _ in oport.routingOutLine:
-                        location = oline.hostDEVS.location
-                        if oline.hostDEVS.location is not None:
-                            options.add((nodeLoad[location], location))
+                    for oline, _ in oport.routing_outline:
+                        location = oline.host_DEVS.location
+                        if oline.host_DEVS.location is not None:
+                            options.add((node_load[location], location))
                 for iport in model.IPorts:
-                    for iline in oport.routingInLine:
-                        location = iline.hostDEVS.location
-                        if iline.hostDEVS.location is not None:
-                            options.add((nodeLoad[location], location))
+                    for iline in oport.routing_inline:
+                        location = iline.host_DEVS.location
+                        if iline.host_DEVS.location is not None:
+                            options.add((node_load[location], location))
                 if not options:
                     continue
                 # Get the best option
                 _, loc = min(options)
-                nodeLoad[loc] += totalActivities[model.model_id]
+                node_load[loc] += total_activities[model.model_id]
                 allocation[model.model_id] = loc
                 allocation_rev[loc].add(model.model_id)
-                toAlloc.remove(model)
+                to_alloc.remove(model)
             if not changes:
                 # An iteration without changes, means that we loop forever
-                for m in toAlloc:
+                for m in to_alloc:
                     # Force an allocation to 0
                     allocation[m.model_id] = 0
                     # allocation_rev doesn't need to be updated

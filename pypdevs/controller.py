@@ -41,15 +41,15 @@ class Controller(BaseSimulator):
         :param server: the server to make requests on
         """
         BaseSimulator.__init__(self, name, model, server)
-        self.waitingLock = threading.Lock()
+        self.waiting_lock = threading.Lock()
         self.accumulator = {}
-        self.noFinishRing = threading.Lock()
-        self.noFinishRing.acquire()
-        self.locationCellView = False
+        self.no_finish_ring = threading.Lock()
+        self.no_finish_ring.acquire()
+        self.location_cell_view = False
         self.graph = None
         self.allocations = None
-        self.runningIrreversible = None
-        self.initialAllocator = None
+        self.running_irreversible = None
+        self.initial_allocator = None
         self.prev_termination_time = 0.0
 
     def __setstate__(self, retdict):
@@ -59,15 +59,15 @@ class Controller(BaseSimulator):
         :param retdict: dictionary containing attributes and their value
         """
         BaseSimulator.__setstate__(self, retdict)
-        self.waitingLock = threading.Lock()
-        self.noFinishRing = threading.Lock()
-        self.noFinishRing.acquire()
+        self.waiting_lock = threading.Lock()
+        self.no_finish_ring = threading.Lock()
+        self.no_finish_ring.acquire()
 
     def GVTdone(self):
         """
         Notify this simulation kernel that the GVT calculation is finished
         """
-        self.waitForGVT.set()
+        self.wait_for_GVT.set()
 
     def isFinished(self, running):
         """
@@ -84,18 +84,18 @@ class Controller(BaseSimulator):
         # It seems that we should be finished, so just ACK this with every simulation kernel before proceeding
         #   it might be possible that the kernel's 'notifyRun' command is still on the way, making the simulation
         #   stop too soon.
-        self.noFinishRing.acquire()
+        self.no_finish_ring.acquire()
         msgcount = self.finishRing(0, 0, True)
         if msgcount == -1:
             # One of the nodes was still busy
-            self.noFinishRing.release()
+            self.no_finish_ring.release()
             return False
         else:
             msgcount2 = self.finishRing(0, 0, True)
             # If they are equal, we are done
             ret = msgcount == msgcount2
             if not ret:
-                self.noFinishRing.release()
+                self.no_finish_ring.release()
             else:
                 self.waiting = 0
             return ret
@@ -113,9 +113,9 @@ class Controller(BaseSimulator):
             if self.isFinished(running):
                 # All simulation kernels have told us that they are idle at the moment
                 break
-        self.runGVT = False
-        self.eventGVT.set()
-        self.gvtthread.join()
+        self.run_GVT = False
+        self.event_GVT.set()
+        self.GVT_thread.join()
 
     def startGVTThread(self, GVT_interval):
         """
@@ -125,12 +125,12 @@ class Controller(BaseSimulator):
         """
         # We seem to be the controller
         # Start up the GVT algorithm then
-        self.eventGVT = threading.Event()
-        self.runGVT = True
-        self.gvtthread = threading.Thread(target=Controller.threadGVT, 
+        self.event_GVT = threading.Event()
+        self.run_GVT = True
+        self.GVT_thread = threading.Thread(target=Controller.thread_GVT,
                                           args=[self, GVT_interval])
-        self.gvtthread.daemon = True
-        self.gvtthread.start()
+        self.GVT_thread.daemon = True
+        self.GVT_thread.start()
 
     def threadGVT(self, freq):
         """
@@ -140,9 +140,9 @@ class Controller(BaseSimulator):
         :param freq: the time to sleep between two GVT calculations
         """
         # Wait for the simulation to have done something useful before we start
-        self.eventGVT.wait(freq)
+        self.event_GVT.wait(freq)
         # Maybe simulation already finished...
-        while self.runGVT:
+        while self.run_GVT:
             #print("ACCUMULATOR: " + str(self.accumulator))
             self.receiveControl([float('inf'), 
                                  float('inf'), 
@@ -150,10 +150,10 @@ class Controller(BaseSimulator):
                                  {}], 
                                 True)
             # Wait until the lock is released elsewhere
-            self.waitForGVT.wait()
-            self.waitForGVT.clear()
+            self.wait_for_GVT.wait()
+            self.wait_for_GVT.clear()
             # Limit the GVT algorithm, otherwise this will flood the ring
-            self.eventGVT.wait(freq)
+            self.event_GVT.wait(freq)
 
     def getVCDVariables(self):
         """
@@ -162,7 +162,7 @@ class Controller(BaseSimulator):
         :returns: list -- all VCD variables in the current scope
         """
         variables = []
-        for d in self.total_model.componentSet:
+        for d in self.total_model.component_set:
             variables.extend(d.getVCDVariables())
         return variables
 
@@ -171,15 +171,15 @@ class Controller(BaseSimulator):
         Synchronous simulation call, identical to the normal call, with the exception that it will be a blocking call as only "simulate" is marked as oneway.
         """
         BaseSimulator.simulate_sync(self)
-        self.noFinishRing.acquire()
+        self.no_finish_ring.acquire()
 
     def simulate(self):
         """
         Run the actual simulation on the controller. This will simply 'intercept' the call to the original simulate and perform location visualisation when necessary.
         """
         self.checkForTemporaryIrreversible()
-        self.noFinishRing.release()
-        if self.locationCellView:
+        self.no_finish_ring.release()
+        if self.location_cell_view:
             from pypdevs.activityVisualisation import visualizeLocations
             visualizeLocations(self)
         # Call superclass (the actual simulation)
@@ -213,35 +213,35 @@ class Controller(BaseSimulator):
         # Only run this code once
         if self.graph is None and self.allocations is None:
             # It seems this is the first time
-            if self.initialAllocator is None:
+            if self.initial_allocator is None:
                 # No allocator was defined, or it has already issued its allocation code, which resulted into 'nothing'
                 self.graph = None
                 self.allocations = None
             else:
                 from pypdevs.util import constructGraph, saveLocations
                 self.graph = constructGraph(self.model)
-                allocs = self.initialAllocator.allocate(self.model.componentSet,
+                allocs = self.initialAllocator.allocate(self.model.component_set,
                                                         self.getEventGraph(),
                                                         self.kernels,
-                                                        self.totalActivities)
+                                                        self.total_activities)
                 self.allocations = allocs
-                self.initialAllocator = None
+                self.initial_allocator = None
                 saveLocations("locationsave.txt", 
                               self.allocations, 
                               self.model_ids)
         return self.graph, self.allocations
 
-    def setCellLocationTracer(self, x, y, locationCellView):
+    def setCellLocationTracer(self, x, y, location_cell_view):
         """
         Sets the Location tracer and all its configuration parameters
 
         :param x: the horizontal size of the grid
         :param y: the vertical size of the grid
-        :param locationCellView: whether or not to enable it
+        :param location_cell_view: whether or not to enable it
         """
         self.x_size = x
         self.y_size = y
-        self.locationCellView = locationCellView
+        self.location_cell_view = location_cell_view
 
     def setRelocator(self, relocator):
         """
@@ -263,26 +263,28 @@ class Controller(BaseSimulator):
 
         :param at: whether or not to enable activity tracking
         """
-        self.activityTracking = at
+        self.activity_tracking = at
 
-    def setClassicDEVS(self, classicDEVS):
+    def setClassicDEVS(self, classic_DEVS):
         """
         Sets the use of Classic DEVS instead of Parallel DEVS.
 
         :param classicDEVS: whether or not to use Classic DEVS
         """
         # Do this once, to prevent checks for the classic DEVS formalism
-        if classicDEVS:
+        if classic_DEVS:
+            # Methods, so CamelCase
             self.coupledOutputGeneration = self.coupledOutputGenerationClassic
 
-    def setAllocator(self, initialAllocator):
+    def setAllocator(self, initial_allocator):
         """
         Sets the use of an initial relocator.
 
-        :param initialAllocator: whether or not to use an initial allocator
+        :param initial_allocator: whether or not to use an initial allocator
         """
-        self.initialAllocator = initialAllocator
-        if initialAllocator is not None:
+        self.initial_allocator = initial_allocator
+        if initial_allocator is not None:
+            # Methods, so CamelCase
             self.atomicOutputGeneration_backup = self.atomicOutputGeneration
             self.atomicOutputGeneration = self.atomicOutputGenerationEventTracing
 
@@ -292,16 +294,16 @@ class Controller(BaseSimulator):
 
         :param dsdevs: dsdevs boolean
         """
-        self.useDSDEVS = dsdevs
+        self.use_DSDEVS = dsdevs
 
-    def setRealtime(self, inputReferences):
+    def setRealtime(self, input_references):
         """
         Sets the use of realtime simulation.
 
-        :param inputReferences: dictionary containing the string to port mapping
+        :param input_references: dictionary containing the string to port mapping
         """
         self.realtime = True
-        self.realTimeInputPortReferences = inputReferences
+        self.realtime_port_references = input_references
 
     def setTerminationCondition(self, termination_condition):
         """
@@ -343,12 +345,12 @@ class Controller(BaseSimulator):
         if not relocate:
             return
 
-        if self.runningIrreversible is not None:
-            self.getProxy(self.runningIrreversible).unsetIrreversible()
-            self.runningIrreversible = None
+        if self.running_irreversible is not None:
+            self.getProxy(self.running_irreversible).unsetIrreversible()
+            self.running_irreversible = None
 
-        while not self.noFinishRing.acquire(False):
-            if not self.runGVT:
+        while not self.no_finish_ring.acquire(False):
+            if not self.run_GVT:
                 self.GVTdone()
                 return
             time.sleep(0)
@@ -386,14 +388,14 @@ class Controller(BaseSimulator):
                     if kernels[destination] == 0:
                         self.getProxy(destination).migrationUnlock()
         # OK, now check whether we need to visualize all locations or not
-        if self.locationCellView:
+        if self.location_cell_view:
             visualizeLocations(self)
 
         # Possibly some node is now hosting all models, so allow this node to become irreversible for some time.
         self.checkForTemporaryIrreversible()
 
         # Allow the finishring algorithm again
-        self.noFinishRing.release()
+        self.no_finishRing.release()
 
     def checkForTemporaryIrreversible(self):
         """
@@ -407,20 +409,20 @@ class Controller(BaseSimulator):
             # This does offer a slight negative impact, though it isn't really worth fixing for the time being
             return
         if isinstance(self.destinations[0], int):
-            currentKernel = self.destinations[0]
+            current_kernel = self.destinations[0]
         else:
-            currentKernel = 0
+            current_kernel = 0
         for kernel in self.destinations:
             if isinstance(kernel, int):
                 loc = kernel
             else:
                 loc = 0
-            if loc != currentKernel:
+            if loc != current_kernel:
                 break
         else:
             # We didn't break, so one of the nodes runs all at once
-            self.getProxy(currentKernel).setIrreversible()
-            self.runningIrreversible = currentKernel
+            self.getProxy(current_kernel).setIrreversible()
+            self.running_irreversible = current_kernel
 
     def notifyLocked(self, remote):
         """
@@ -443,10 +445,10 @@ class Controller(BaseSimulator):
         :param port: the port to remove
         """
         self.model.undoDirectConnect()
-        for iport in port.inLine:
-            iport.outLine = [p for p in iport.outLine if p != port]
-        for oport in port.outLine:
-            oport.outLine = [p for p in oport.inLine if p != port]
+        for iport in port.inline:
+            iport.outline = [p for p in iport.outline if p != port]
+        for oport in port.outline:
+            oport.outline = [p for p in oport.inline if p != port]
 
     def dsUnscheduleModel(self, model):
         """
@@ -456,14 +458,14 @@ class Controller(BaseSimulator):
         """
         self.model.undoDirectConnect()
         if isinstance(model, CoupledDEVS):
-            for m in model.componentSet:
+            for m in model.component_set:
                 self.dsUnscheduleModel(m, False)
             for port in model.IPorts:
                 self.dsRemovePort(port)
             for port in model.OPorts:
                 self.dsRemovePort(port)
         elif isinstance(model, AtomicDEVS):
-            self.model.componentSet.remove(model)
+            self.model.component_set.remove(model)
             self.model.models.remove(model)
             # The model is removed, so remove it from the scheduler
             self.model.scheduler.unschedule(model)
@@ -475,7 +477,7 @@ class Controller(BaseSimulator):
             for port in model.OPorts:
                 self.dsRemovePort(port)
         else:
-            raise DEVSException("Unknown model to schedule: " + str(model))
+            raise DEVSException("Unknown model to schedule: %s" % model)
 
     def dsScheduleModel(self, model):
         """
@@ -485,56 +487,56 @@ class Controller(BaseSimulator):
         """
         self.model.undoDirectConnect()
         if isinstance(model, CoupledDEVS):
-            model.fullName = model.parent.fullName + "." + model.getModelName()
+            model.full_name = model.parent.full_name + "." + model.getModelName()
             for m in model.componentSet:
                 self.dsScheduleModel(m)
         elif isinstance(model, AtomicDEVS):
             model.model_id = len(self.model_ids)
-            model.fullName = model.parent.fullName + "." + model.getModelName()
+            model.full_name = model.parent.full_name + "." + model.getModelName()
             model.location = self.name
             self.model_ids.append(model)
             self.destinations.append(model)
-            self.model.componentSet.append(model)
+            self.model.component_set.append(model)
             self.model.models.append(model)
             self.model.local_model_ids.add(model.model_id)
-            self.atomicInit(model, self.currentclock)
+            self.atomicInit(model, self.current_clock)
             p = model.parent
-            model.selectHierarchy = [model]
+            model.select_hierarchy = [model]
             while p != None:
-                model.selectHierarchy = [p] + model.selectHierarchy
+                model.select_hierarchy = [p] + model.select_hierarchy
                 p = p.parent
-            if model.timeNext[0] == self.currentclock[0]:
+            if model.time_next[0] == self.current_clock[0]:
                 # If scheduled for 'now', update the age manually
-                model.timeNext = (model.timeNext[0], self.currentclock[1])
+                model.time_next = (model.time_next[0], self.current_clock[1])
             # It is a new model, so add it to the scheduler too
             self.model.scheduler.schedule(model)
         else:
-            raise DEVSException("Unknown model to schedule: " + str(model))
+            raise DEVSException("Unknown model to schedule: %s" % model)
 
-    def setRealTime(self, subsystem, generatorfile, ports, scale, args=[]):
+    def setRealTime(self, subsystem, generator_file, ports, scale, args=[]):
         """
         Set the use of realtime simulation
 
         :param subsystem: defines the subsystem to use
-        :param generatorfile: filename to use for generating external inputs
+        :param generator_file: filename to use for generating external inputs
         :param ports: input port references
         :param scale: the scale factor for realtime simulation
         :param args: additional arguments for the realtime backend
         """
         self.realtime = True
-        self.threadingBackend = ThreadingBackend(subsystem, args)
+        self.threading_backend = ThreadingBackend(subsystem, args)
         self.rt_zerotime = time.time()
-        async = AsynchronousComboGenerator(generatorfile, self.threadingBackend)
-        self.asynchronousGenerator = async
+        async = AsynchronousComboGenerator(generator_file, self.threading_backend)
+        self.asynchronous_generator = async
         self.realtime_starttime = time.time()
         self.portmap = ports
-        self.realtimeScale = scale
+        self.realtime_scale = scale
 
     def gameLoop(self):
         """
         Perform all computations up to the current time. Only applicable for the game loop realtime backend.
         """
-        self.threadingBackend.step()
+        self.threading_backend.step()
 
     def realtimeInterrupt(self, string):
         """
@@ -542,7 +544,7 @@ class Controller(BaseSimulator):
 
         :param string: the value to inject
         """
-        self.threadingBackend.interrupt(string)
+        self.threading_backend.interrupt(string)
 
     def stateChange(self, model_id, variable, value):
         """

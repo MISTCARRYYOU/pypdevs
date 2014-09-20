@@ -18,22 +18,22 @@ class AutoAllocator(object):
     Allocate all models in a static manner, simply trying to divide the number of models equally.
     Our 'heuristic' is to allocate in chunks as defined in the root coupled model.
     """
-    def allocate(self, models, edges, nrnodes, totalActivities):
+    def allocate(self, models, edges, nr_nodes, total_activities):
         """
         Calculate allocations for the nodes, using the information provided.
 
         :param models: the models to allocte
         :param edges: the edges between the models
-        :param nrnodes: the number of nodes to allocate over. Simply an upper bound!
-        :param totalActivities: activity tracking information from each model
+        :param nr_nodes: the number of nodes to allocate over. Simply an upper bound!
+        :param total_activities: activity tracking information from each model
         :returns: allocation that was found
         """
         allocation = {}
 
-        allocatedTopmost = {}
-        currentNode = 0
+        allocated_topmost = {}
+        current_node = 0
 
-        totalModels = len(models)
+        total_models = len(models)
 
         for model in models:
             # Not yet allocated, so allocate it somewhere
@@ -45,11 +45,11 @@ class AutoAllocator(object):
             # searchmodel is now the root model
             # child is its 1st decendant, on which we will allocate
             try:
-                node = allocatedTopmost[child]
+                node = allocated_topmost[child]
             except KeyError:
-                currentNode = (currentNode + 1) % nrnodes
-                allocatedTopmost[child] = currentNode
-                node = currentNode
+                current_node = (current_node + 1) % nr_nodes
+                allocated_topmost[child] = current_node
+                node = current_node
             allocation[model.model_id] = node
 
         return allocation

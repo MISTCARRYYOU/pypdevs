@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 The Activity Heap is based on a heap, though allows for reschedules. 
 
@@ -34,7 +33,7 @@ However, the actual model and states are not duplicated as they are references.
 The additional memory requirement should not be a problem in most situations.
 
 The 'activity' part from the name stems from the fact that only models where 
-the *timeNext* attribute is smaller than infinity will be scheduled. 
+the *time_next* attribute is smaller than infinity will be scheduled. 
 Since these elements are not added to the heap, they aren't taken into account 
 in the complexity. This allows for severe optimisations in situations where 
 a lot of models can be scheduled for infinity.
@@ -62,29 +61,29 @@ class SchedulerAH(object):
     """
     Scheduler class itself
     """
-    def __init__(self, models, epsilon, totalModels):
+    def __init__(self, models, epsilon, total_models):
         """
         Constructor
 
         :param models: all models in the simulation
         """
         self.heap = []
-        self.id_fetch = [None] * totalModels
+        self.id_fetch = [None] * total_models
         for model in models:
-            if model.timeNext[0] != float('inf'):
-                self.id_fetch[model.model_id] = [model.timeNext, 
+            if model.time_next[0] != float('inf'):
+                self.id_fetch[model.model_id] = [model.time_next, 
                                                  model.model_id, 
                                                  True, 
                                                  model]
                 heappush(self.heap, self.id_fetch[model.model_id])
             else:
-                self.id_fetch[model.model_id] = [model.timeNext, 
+                self.id_fetch[model.model_id] = [model.time_next, 
                                                  model.model_id, 
                                                  False, 
                                                  model]
         
         self.invalids = 0
-        self.maxInvalids = len(models)*2
+        self.max_invalids = len(models)*2
         self.epsilon = epsilon
 
     def schedule(self, model):
@@ -95,15 +94,15 @@ class SchedulerAH(object):
         """
         #assert debug("Scheduling " + str(model))
         # Create the entry, as we have accepted the model
-        elem = [model.timeNext, model.model_id, False, model]
+        elem = [model.time_next, model.model_id, False, model]
         try:
             self.id_fetch[model.model_id] = elem
         except IndexError:
             # A completely new model
             self.id_fetch.append(elem)
-            self.maxInvalids += 2
+            self.max_invalids += 2
         # Check if it requires to be scheduled
-        if model.timeNext[0] != float('inf'):
+        if model.time_next[0] != float('inf'):
             self.id_fetch[model.model_id][2] = True
             heappush(self.heap, self.id_fetch[model.model_id])
 
@@ -114,13 +113,13 @@ class SchedulerAH(object):
         :param model: model to unschedule
         """
         #assert debug("Unscheduling " + str(model))
-        if model.timeNext != float('inf'):
+        if model.time_next != float('inf'):
             self.invalids += 1
         # Update the referece still in the heap
         self.id_fetch[model.model_id][2] = False
         # Remove the reference in our id_fetch
         self.id_fetch[model.model_id] = None
-        self.maxInvalids -= 2
+        self.max_invalids -= 2
 
     def massReschedule(self, reschedule_set):
         """
@@ -135,19 +134,19 @@ class SchedulerAH(object):
         for model in reschedule_set:
             event = self.id_fetch[model.model_id]
             if event[2]:
-                if model.timeNext == event[0]:
+                if model.time_next == event[0]:
                     continue
                 elif event[0][0] != inf:
                     self.invalids += 1
                 event[2] = False
-            if model.timeNext[0] != inf:
-                self.id_fetch[model.model_id] = [model.timeNext, 
+            if model.time_next[0] != inf:
+                self.id_fetch[model.model_id] = [model.time_next, 
                                                  model.model_id, 
                                                  True, 
                                                  model]
                 heappush(self.heap, self.id_fetch[model.model_id])
         #assert debug("Optimizing heap")
-        if self.invalids >= self.maxInvalids:
+        if self.invalids >= self.max_invalids:
             #assert info("Heap compaction in progress")
             self.heap = [i for i in self.heap if i[2] and (i[0][0] != inf)]
             heapify(self.heap)
@@ -187,7 +186,7 @@ class SchedulerAH(object):
         .. warning:: For efficiency, this method only checks the **first** elements, so trying to invoke this function with a timestamp higher than the value provided with the *readFirst* method, will **always** return an empty set.
         """
         #assert debug("Asking all imminent models")
-        immChildren = []
+        imm_children = []
         t, age = time
         try:
             # Age must be exactly the same
@@ -196,7 +195,7 @@ class SchedulerAH(object):
                 # Check if the found event is actually still active
                 if(first[2]):
                     # Active, so event is imminent
-                    immChildren.append(first[3])
+                    imm_children.append(first[3])
                     first[2] = False
                 else:
                     # Wasn't active, but we will have to pop this to get the next
@@ -208,4 +207,4 @@ class SchedulerAH(object):
                 first = self.heap[0]
         except IndexError:
             pass
-        return immChildren
+        return imm_children

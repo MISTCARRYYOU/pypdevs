@@ -13,21 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- coding: Latin-1 -*-
 """
 The No Age scheduler is based on the Heapset scheduler, though it does not take age into account.
 
 .. warning:: This scheduler does not take the age into account, making it **unusable** in simulations where the *timeAdvance* function can return (exactly) 0. If unsure, do **not** use this scheduler, but the more general Heapset scheduler.
 
-The heap will contain only the timestamps of events that should happen. One of the dictionaries will contain the actual models that transition at the specified time. The second dictionary than contains a reverse relation: it maps the models to their timeNext. This reverse relation is necessary to know the *old* timeNext value of the model. Because as soon as the model has its timeNext changed, its previously scheduled time will be unknown. This 'previous time' is **not** equal to the *timeLast*, as it might be possible that the models wait time was interrupted.
+The heap will contain only the timestamps of events that should happen. One of the dictionaries will contain the actual models that transition at the specified time. The second dictionary than contains a reverse relation: it maps the models to their time_next. This reverse relation is necessary to know the *old* time_next value of the model. Because as soon as the model has its time_next changed, its previously scheduled time will be unknown. This 'previous time' is **not** equal to the *timeLast*, as it might be possible that the models wait time was interrupted.
 
-For a schedule, the model is added to the dictionary at the specified timeNext. In case it is the first element at this location in the dictionary, we also add the timestamp to the heap. This way, the heap only contains *unique* timestamps and thus the actual complexity is reduced to the number of *different* timestamps. Furthermore, the reverse relation is also updated.
+For a schedule, the model is added to the dictionary at the specified time_next. In case it is the first element at this location in the dictionary, we also add the timestamp to the heap. This way, the heap only contains *unique* timestamps and thus the actual complexity is reduced to the number of *different* timestamps. Furthermore, the reverse relation is also updated.
 
 Unscheduling is done similarly by simply removing the element from the dictionary.
 
 Rescheduling is a slight optimisation of unscheduling, followed by scheduling.
 
-This scheduler does still schedule models that are inactive (their timeNext is infinity), though this does not influence the complexity. The complexity is not affected due to infinity being a single element in the heap that is always present. Since a heap has O(log(n)) complexity, this one additional element does not have a serious impact.
+This scheduler does still schedule models that are inactive (their time_next is infinity), though this does not influence the complexity. The complexity is not affected due to infinity being a single element in the heap that is always present. Since a heap has O(log(n)) complexity, this one additional element does not have a serious impact.
 
 The main advantage over the Activity Heap is that it never gets dirty and thus doesn't require periodical cleanup. The only part that gets dirty is the actual heap, which only contains small tuples. Duplicates of these will also be reduced to a single element, thus memory consumption should not be a problem in most cases.
 
@@ -40,14 +39,14 @@ class SchedulerNA(object):
     """
     Scheduler class itself
     """
-    def __init__(self, models, epsilon, totalModels):
+    def __init__(self, models, epsilon, total_models):
         """
         Constructor
 
         :param models: all models in the simulation
         """
         self.heap = []
-        self.reverse = [None] * totalModels
+        self.reverse = [None] * total_models
         self.mapped = {}
         self.infinite = float('inf')
         # Init the basic 'inactive' entry here, to prevent scheduling in the heap itself
@@ -63,14 +62,14 @@ class SchedulerNA(object):
         :param model: the model to schedule
         """
         try:
-            self.mapped[model.timeNext[0]].add(model)
+            self.mapped[model.time_next[0]].add(model)
         except KeyError:
-            self.mapped[model.timeNext[0]] = set([model])
-            heappush(self.heap, model.timeNext[0])
+            self.mapped[model.time_next[0]] = set([model])
+            heappush(self.heap, model.time_next[0])
         try:
-            self.reverse[model.model_id] = model.timeNext[0]
+            self.reverse[model.model_id] = model.time_next[0]
         except IndexError:
-            self.reverse.append(model.timeNext[0])
+            self.reverse.append(model.time_next[0])
 
     def unschedule(self, model):
         """
@@ -100,7 +99,7 @@ class SchedulerNA(object):
             except KeyError:
                 # Element simply not present, so don't need to unschedule it
                 pass
-            self.reverse[model_id] = tn = model.timeNext[0]
+            self.reverse[model_id] = tn = model.time_next[0]
             try:
                 self.mapped[tn].add(model)
             except KeyError:
@@ -131,18 +130,18 @@ class SchedulerNA(object):
         .. warning:: For efficiency, this method only checks the **first** elements, so trying to invoke this function with a timestamp higher than the value provided with the *readFirst* method, will **always** return an empty set.
         """
         t, age = time
-        immChildren = set()
+        imm_children = set()
         try:
             first = self.heap[0]
             if (abs(first - t) < self.epsilon):
                 #NOTE this would change the original set, though this doesn't matter as it is no longer used
-                immChildren = self.mapped.pop(first)
+                imm_children = self.mapped.pop(first)
                 heappop(self.heap)
                 first = self.heap[0]
                 while (abs(first - t) < self.epsilon):
-                    immChildren |= self.mapped.pop(first)
+                    imm_children |= self.mapped.pop(first)
                     heappop(self.heap)
                     first = self.heap[0]
         except IndexError:
             pass
-        return immChildren
+        return imm_children
