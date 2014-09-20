@@ -55,6 +55,8 @@ Parallel and distributed simulation with mpi4py
 
 .. note:: You should be able to simply install mpi4py from your package repository, though this possibly results in suboptimal performance.
 
+.. note:: An installation script for mpi4py and MPICH3 is provided in install_mpi4py.sh. At the end, you will still need to add mpi to your PATH though.
+
 First of all, an MPI middleware has to be installed, for which I recommend MPICH3.
 Due to some non-standard configuration options, it is required to install MPICH manually instead of using the one from the repositories.
 
@@ -70,7 +72,7 @@ The following commands should work on most systems, just replace the '/home/you'
     wget http://www.mpich.org/static/downloads/3.1.2/mpich-3.1.2.tar.gz
     tar -xvzf mpich-3.1.2.tar.gz
     cd mpich-3.1.2
-    ./configure --prefix=$base/mpich --with-device=ch3:sock
+    ./configure --prefix=$base/mpich --with-device=ch3:sock --disable-fortran
     make
     make install
     export PATH=$base/mpich/bin:$PATH
@@ -92,6 +94,6 @@ Now you just need to install mpi4py, which is easy if you have MPICH installed c
     python setup.py install --user
     cd ../..
 
-Testing whether or not everything works can be done by making sure that the following command does not throw an error::
+Testing whether or not everything works can be done by making sure that the following command prints '4' four times::
 
-    python -c "import mpi4py"
+    mpirun -np 4 python -c "from mpi4py import MPI; print(MPI.COMM_WORLD.Get_size())"
