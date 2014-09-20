@@ -122,10 +122,10 @@ class TestGVT(unittest.TestCase):
         self.sim.GVT = 0
         models = [Generator()]
         from pypdevs.statesavers import CopyState
-        models[0].oldStates = [CopyState((0, 1), (2, 1), None, 0, {}, 0), CopyState((2, 1), (6, 1), None, 0, {}, 0)]
+        models[0].old_states = [CopyState((0, 1), (2, 1), None, 0, {}, 0), CopyState((2, 1), (6, 1), None, 0, {}, 0)]
         self.sim.model = StubRootDEVS(models, 0)
         # Prevent a loop
-        self.sim.nextLP = self.sim
+        self.sim.next_LP = self.sim
         self.assertTrue(self.sim.GVT == 0)
         self.sim.setGVT(5, [], False)
         self.assertTrue(self.sim.GVT == 5)

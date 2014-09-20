@@ -22,12 +22,12 @@ class TestScheduler(unittest.TestCase):
         for i in range(10):
             ne = Generator()
             ne.model_id = i
-            ne.timeNext = (1, 1)
+            ne.time_next = (1, 1)
             self.models.append(ne)
         for i in range(10):
             ne = Processor()
             ne.model_id = i + 10
-            ne.timeNext = (float('inf'), 1)
+            ne.time_next = (float('inf'), 1)
             self.models.append(ne)
         self.scheduler = SchedulerAH(self.models, 1e-9, len(self.models))
 
@@ -36,7 +36,7 @@ class TestScheduler(unittest.TestCase):
 
     def test_scheduler_schedule(self):
         # Only 10, since the Processors should not get scheduled 
-        #  due to their timeNext
+        #  due to their time_next
         self.assertTrue(len(self.scheduler.heap) == 10)
 
     def test_scheduler_unschedule(self):

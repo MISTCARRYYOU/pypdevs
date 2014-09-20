@@ -62,50 +62,50 @@ class TestWait(unittest.TestCase):
         #  after each modification, we just check wheter it is still live
         self.sim.Vlock.acquire()
         self.sim.V = [{0: 0}, {}]
-        self.sim.controlmsg = [0, 0, {0: 0}]
+        self.sim.control_msg = [0, 0, {0: 0}]
         self.checkWait(finish=True)
 
         self.sim.V = [{0: -3}, {}]
-        self.sim.controlmsg = [0, 0, {0: 0}]
+        self.sim.control_msg = [0, 0, {0: 0}]
         self.checkWait(finish=True)
 
         self.sim.V = [{0: -3}, {}]
-        self.sim.controlmsg = [0, 0, {0: -4}]
+        self.sim.control_msg = [0, 0, {0: -4}]
         self.checkWait(finish=True)
 
         self.sim.V = [{0: 0}, {}]
-        self.sim.controlmsg = [0, 0, {0: -5}]
+        self.sim.control_msg = [0, 0, {0: -5}]
         self.checkWait(finish=True)
 
         self.sim.V = [{0: 3}, {}]
-        self.sim.controlmsg = [0, 0, {0: -3}]
+        self.sim.control_msg = [0, 0, {0: -3}]
         self.checkWait(finish=True)
 
         self.sim.V = [{0: -3}, {}]
-        self.sim.controlmsg = [0, 0, {0: 3}]
+        self.sim.control_msg = [0, 0, {0: 3}]
         self.checkWait(finish=True)
 
         self.sim.V = [{0: 1}, {}]
-        self.sim.controlmsg = [0, 0, {0: 0}]
+        self.sim.control_msg = [0, 0, {0: 0}]
         self.checkWait(finish=False)
         self.sim.notifyReceive(False)
         self.checkWaitStop(finish=True)
 
         self.sim.V = [{0: 0}, {}]
-        self.sim.controlmsg = [0, 0, {0: 1}]
+        self.sim.control_msg = [0, 0, {0: 1}]
         self.checkWait(finish=False)
         self.sim.notifyReceive(False)
         self.checkWaitStop(finish=True)
 
         self.sim.V = [{0: 3}, {}]
-        self.sim.controlmsg = [0, 0, {0: -2}]
+        self.sim.control_msg = [0, 0, {0: -2}]
         self.checkWait(finish=False)
         self.sim.notifyReceive(False)
         self.checkWaitStop(finish=True)
 
         # Should stop at exactly the correct time
         self.sim.V = [{0: -3}, {}]
-        self.sim.controlmsg = [0, 0, {0: 6}]
+        self.sim.control_msg = [0, 0, {0: 6}]
         self.checkWait(finish=False)
         self.sim.notifyReceive(False)
         self.checkWaitStop(finish=False)
@@ -116,7 +116,7 @@ class TestWait(unittest.TestCase):
 
         # Do multiple receives at once
         self.sim.V = [{0: -3}, {}]
-        self.sim.controlmsg = [0, 0, {0: 6}]
+        self.sim.control_msg = [0, 0, {0: 6}]
         self.checkWait(finish=False)
         self.sim.notifyReceive(False)
         self.sim.notifyReceive(False)

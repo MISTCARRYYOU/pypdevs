@@ -25,7 +25,7 @@ class SchedulerDT(object):
     """
     Scheduler class itself
     """
-    def __init__(self, models, epsilon, totalModels):
+    def __init__(self, models, epsilon, total_models):
         """
         Constructor
 
@@ -34,7 +34,7 @@ class SchedulerDT(object):
         self.ready = set()
         self.infinite = float('inf')
         for m in models:
-            if m.timeNext[0] != self.infinite:
+            if m.time_next[0] != self.infinite:
                 self.ready.add(m)
 
     def schedule(self, model):
@@ -43,7 +43,7 @@ class SchedulerDT(object):
 
         :param model: the model to schedule
         """
-        if model.timeNext[0] != self.infinite:
+        if model.time_next[0] != self.infinite:
             self.ready.add(model)
 
     def unschedule(self, model):
@@ -66,7 +66,7 @@ class SchedulerDT(object):
         """
         for model in reschedule_set:
             try:
-                if model.timeNext[0] != self.infinite:
+                if model.time_next[0] != self.infinite:
                     self.ready.add(model)
                 else:
                     self.ready.remove(model)
@@ -81,7 +81,7 @@ class SchedulerDT(object):
         """
         val = self.ready.pop()
         self.ready.add(val)
-        return val.timeNext
+        return val.time_next
 
     def getImminent(self, time):
         """

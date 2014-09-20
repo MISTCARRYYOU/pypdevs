@@ -566,8 +566,8 @@ class Simulator(object):
             proxy.setGlobals(tracers=self.tracers,
                              address=self.address, 
                              loglevel=self.loglevel, 
-                             checkpointfrequency=self.checkpoint_interval,
-                             checkpointname = self.checkpoint_name,
+                             checkpoint_frequency=self.checkpoint_interval,
+                             checkpoint_name = self.checkpoint_name,
                              kernels=len(loclist),
                              statesaver=self.state_saving,
                              memoization=self.memoization,
@@ -606,7 +606,7 @@ class Simulator(object):
             for proxy in proxylist:
                 proxy.setTerminationTime((self.termination_time, float('inf')))
 
-        if self.CHK_interval > 0:
+        if self.checkpoint_interval > 0:
             self.checkpoint()
 
         self.real_simulate()

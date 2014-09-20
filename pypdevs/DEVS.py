@@ -101,7 +101,7 @@ class BaseDEVS(object):
 
         :param port: the port to remove
         """
-        if not hasattr(self, "fullName"):
+        if not hasattr(self, "full_name"):
             raise DEVSException("removePort should only be called during a simulation")
         if port.is_input:
             self.IPorts.remove(port)
@@ -229,8 +229,8 @@ class AtomicDEVS(BaseDEVS):
         :param activities: dictionary containing all activities for the models
         """
         accumulator = 0.0
-        for state in self.oldStates:
-            if state.timeLast[0] < time:
+        for state in self.old_states:
+            if state.time_last[0] < time:
                 accumulator += state.activity
         activities[self.model_id] = accumulator
         
@@ -707,7 +707,7 @@ class RootDEVS(BaseDEVS):
         :param scheduler_type: type of scheduler to use (string representation)
         """
         BaseDEVS.__init__(self, "ROOT model")
-        self.componentSet = components
+        self.component_set = components
         self.time_next = (float('inf'), 1)
         self.local_model_ids = set()
         for i in self.component_set:
@@ -745,7 +745,7 @@ class RootDEVS(BaseDEVS):
             except:
                 exec("from %s import %s" % scheduler_type)
             nr_models = len(self.models)
-            self.scheduler = eval("%s(self.componentSet, EPSILON, nr_models)"
+            self.scheduler = eval("%s(self.component_set, EPSILON, nr_models)"
                                   % scheduler_type[1])
         else:
             raise DEVSException("Unknown Scheduler: " + str(scheduler_type))
@@ -787,7 +787,7 @@ class RootDEVS(BaseDEVS):
                 # Was reverted, so reschedule
                 reschedules.add(child)
             # Always clear the inputs, as it is possible that there are only 
-            # partial results, which doesn't get found in the timeLast >= time
+            # partial results, which doesn't get found in the time_last >= time
             child.my_input = {}
         self.scheduler.massReschedule(reschedules)
         self.setTimeNext()
@@ -822,7 +822,7 @@ class Port(object):
    
         # The name of the port
         self.name = name
-        self.is_input = isInput
+        self.is_input = is_input
         self.z_functions = {}
 
     def getPortName(self):
@@ -866,7 +866,7 @@ def directConnect(component_set, local):
 
     :param component_set: the iterable to direct connect
     :param local: whether or not simulation is local; if it is, dynamic structure code will be prepared
-    :returns: the direct connected componentSet
+    :returns: the direct connected component_set
     """
     new_list = []
     for i in component_set:
@@ -909,7 +909,7 @@ def directConnect(component_set, local):
                         outport.routing_outline.append((outline, z))
         # Remap the input ports: identical to the output ports, only in the reverse direction
         for inport in i.IPorts:
-            inport.routing_outline = []
+            inport.routing_inline = []
             for inline in inport.inline:
                 if isinstance(inline.host_DEVS, CoupledDEVS):
                     for outline in inline.inline:

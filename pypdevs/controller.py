@@ -488,7 +488,7 @@ class Controller(BaseSimulator):
         self.model.undoDirectConnect()
         if isinstance(model, CoupledDEVS):
             model.full_name = model.parent.full_name + "." + model.getModelName()
-            for m in model.componentSet:
+            for m in model.component_set:
                 self.dsScheduleModel(m)
         elif isinstance(model, AtomicDEVS):
             model.model_id = len(self.model_ids)

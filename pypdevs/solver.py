@@ -119,7 +119,7 @@ class Solver(object):
                     else:
                         aDEVS.memo = []
                 activity_tracking_prevalue = aDEVS.preActivityCalculation()
-            elif self.activityTracking:
+            elif self.activity_tracking:
                 activity_tracking_prevalue = aDEVS.preActivityCalculation()
             ###########
 
@@ -309,7 +309,7 @@ class Solver(object):
                                    for m in payload]
                     if aDEVS.model_id in self.model.local_model_ids:
                         # This setdefault call is responsible for our non-linear runtime in several situations...
-                        aDEVS.myInput.setdefault(inport, []).extend(payload)
+                        aDEVS.my_input.setdefault(inport, []).extend(payload)
                         self.transitioning[aDEVS] |= 2
                     else:
                         remotes.setdefault(aDEVS.model_id, 

@@ -91,12 +91,12 @@ def basicSim():
                    tracers=[],
                    address=('localhost', 514),
                    loglevel=logging.WARN,
-                   checkpointname="(none)",
+                   checkpoint_name="(none)",
                    memoization=False,
                    statesaver=2,
                    kernels=3,
-                   checkpointfrequency=-1,
-                   msgCopy=0)
+                   checkpoint_frequency=-1,
+                   msg_copy=0)
     # Set it so that it should be initialised to a decent prevtime
     sim.prevtime = (0, 1)
     sim.model = StubModel()

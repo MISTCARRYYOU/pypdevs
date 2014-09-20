@@ -45,13 +45,13 @@ class Server(object):
         """
         self.name = name
         self.kernel = None
-        self.size = totalSize
+        self.size = total_size
         self.proxies = [MPIRedirect(i) for i in range(total_size)]
         from pypdevs.MPIRedirect import LocalRedirect
         self.proxies[name] = LocalRedirect(self)
         self.queued_messages = []
         self.queued_time = None
-        if totalSize > 1:
+        if total_size > 1:
             self.threadpool = ThreadPool(2)
             self.bootMPI()
 

@@ -253,7 +253,7 @@ class BaseSimulator(Solver):
 
         self.local = local
         if isinstance(model, CoupledDEVS):
-            self.model = RootDEVS(self.local, model.componentSet, scheduler_type)
+            self.model = RootDEVS(self.local, model.component_set, scheduler_type)
         elif isinstance(model, AtomicDEVS):
             self.model = RootDEVS(self.local, [model], scheduler_type)
 
@@ -302,26 +302,26 @@ class BaseSimulator(Solver):
         # needs to be found. The processed messages list should be empty, with the following reason as the outputQueue.
         remote.messageTransfer(self.input_scheduler.extract(model_ids))
         bundled_models = [
-            (m.model_id, (m.timeLast, m.timeNext, m.state)) for m in models]
+            (m.model_id, (m.time_last, m.time_next, m.state)) for m in models]
         #TODO clean up this code to use the bundling somewhat more efficient
         remote.activateModels(bundled_models)
         for model in models:
             # No need to ask the new node whether or not there are specific nodes that also have to be informed
-            #remote.activateModel(model.model_id, (model.timeLast, model.timeNext, model.state))
+            #remote.activateModel(model.model_id, (model.time_last, model.time_next, model.state))
             # Delete our representation of the model
             model.state = None
             model.old_states = []
             del self.activities[model.model_id]
 
-        # Remove the model from the componentSet of the RootDEVS
+        # Remove the model from the component_set of the RootDEVS
         components = self.model.component_set
-        self.model.componentSet = [m for m in components if m not in models]
+        self.model.component_set = [m for m in components if m not in models]
         for model_id in model_ids:
             self.model.local_model_ids.remove(model_id)
             self.destinations[model_id] = destination
             self.model_ids[model_id].location = destination
 
-        # Now update the timeNext and timeLast values here
+        # Now update the time_next and time_last values here
         self.model.setTimeNext()
 
     def notifyMigration(self, model_ids, destination):
@@ -600,7 +600,7 @@ class BaseSimulator(Solver):
             self.model.setGVT(GVT, self.activities, last_state_only)
             addDict(self.total_activities, self.activities)
             if self.temporary_irreversible:
-                #print("Setting new state for %s models" % len(self.model.componentSet))
+                #print("Setting new state for %s models" % len(self.model.component_set))
                 for model in self.model.component_set:
                     activity = self.total_activities[model.model_id]
                     model.old_states = [self.state_saver(model.time_last,
@@ -1020,7 +1020,7 @@ class BaseSimulator(Solver):
 
     def processMessage(self, clock):
         """
-        Find the first external message smaller than the clock and process them if necessary. Return the new timeNext for simulation.
+        Find the first external message smaller than the clock and process them if necessary. Return the new time_next for simulation.
 
         :param clock: timestamp of the next internal transition
         :returns: timestamp of the next transition, taking into account external messages
@@ -1039,7 +1039,7 @@ class BaseSimulator(Solver):
                 for port in message.content:
                     aDEVS = port.host_DEVS
                     content = message.content[port]
-                    aDEVS.myInput.setdefault(port, []).extend(content)
+                    aDEVS.my_input.setdefault(port, []).extend(content)
                     self.transitioning[aDEVS] |= 2
                 self.input_scheduler.removeFirst()
                 message = self.input_scheduler.readFirst()
@@ -1052,7 +1052,7 @@ class BaseSimulator(Solver):
         """
         Perform the waiting for input required in realtime simulation.
 
-        The timeNext of the model will be updated accordingly and all messages will be routed.
+        The time_next of the model will be updated accordingly and all messages will be routed.
         """
         # NOTE a scale of 2 means that simulation will take twice as long
         self.performActions()
@@ -1081,7 +1081,7 @@ class BaseSimulator(Solver):
             #NOTE no distinction between PDEVS and CDEVS is necessary, as CDEVS is internally handled just like PDEVS
             #     wrappers are provided to 'unpack' the list structure
             msg = {event_port: [event_value]}
-            event_port.host_DEVS.myInput = msg
+            event_port.host_DEVS.my_input = msg
             self.transitioning[event_port.host_DEVS] = 2
             time_diff = time.time() - self.rt_zerotime
             self.model.time_next = (time_diff / self.realtime_scale, 1)
@@ -1089,8 +1089,8 @@ class BaseSimulator(Solver):
             return False
         elif wait_time <= 0:
             # Transition
-            #NOTE actually, we should set the timeNext here too...
-            #     otherwise we will always have a 'perfect' timeNext
+            #NOTE actually, we should set the time_next here too...
+            #     otherwise we will always have a 'perfect' time_next
             return False
         else:
             # We have to wait some more for the next time
@@ -1155,7 +1155,7 @@ class BaseSimulator(Solver):
                     self.simlock.acquire()
                     continue
 
-                # Put this in a lock to prevent a possible infinite timeNext from reading the prevtime with the old value
+                # Put this in a lock to prevent a possible infinite time_next from reading the prevtime with the old value
                 with self.Vlock:
                     # Fetch the next time of a transition
                     cDEVS.setTimeNext()
@@ -1436,7 +1436,7 @@ class BaseSimulator(Solver):
         """
         Recompute the timeAdvance of a specific model and reapply it. It should only be called after the model was changed using one of the provided functions.
         The change will seemingly have happened right after the last simulation step, so your timeAdvance should **NOT** return something smaller than this.
-        The actual *absolute* timeNext will be determined at the time of the last transition too. If the model was not altered in a way that causes a major change
+        The actual *absolute* time_next will be determined at the time of the last transition too. If the model was not altered in a way that causes a major change
         to the state, the *elapsed* time attribute will take care of this call perfectly.
         """
         if hasattr(self.model, "scheduler"):
