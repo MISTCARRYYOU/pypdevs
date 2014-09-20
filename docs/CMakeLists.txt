@@ -7,7 +7,8 @@ set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in" "${BINARY_BUILD_DIR}/conf.py")
 
 add_custom_target(pypdevs_docs ALL
-        ${SPHINX_EXECUTABLE}
+        ${PYTHON_EXECUTABLE}
+            -m sphinx
             -b html
             -d "${SPHINX_CACHE_DIR}"
             -c "${BINARY_BUILD_DIR}"

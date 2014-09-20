@@ -3,7 +3,6 @@ project (PyPDEVS)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 set(PACKAGE_VERSION "2.2.4")
 find_package(PythonInterp REQUIRED)
-find_package(Sphinx REQUIRED)
 
 set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
 set(SETUP_PY "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
