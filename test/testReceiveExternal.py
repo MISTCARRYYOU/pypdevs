@@ -20,7 +20,7 @@ class TestReceiveExternal(unittest.TestCase):
         self.sim = basicSim()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def test_receiveExternal(self):
         self.assertTrue(self.sim.inqueue == [])

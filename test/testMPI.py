@@ -98,7 +98,7 @@ class TestMPI(unittest.TestCase):
         proc = subprocess.Popen("mpirun -np 3 python testmodels/experiment.py checkpoint", shell=True)
         # Wait for a few seconds, should be about halfway by then
         time.sleep(5)
-        proc.terminate()
+        proc.kill()
         # Now try recovering
         proc = subprocess.Popen("mpirun -np 3 python testmodels/experiment.py checkpoint", shell=True)
         proc.wait()

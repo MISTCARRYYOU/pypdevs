@@ -23,7 +23,7 @@ class TestTermination(unittest.TestCase):
         self.msg = basicMsg()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def test_check_global(self):
         # If check returns True, it means that we should stop

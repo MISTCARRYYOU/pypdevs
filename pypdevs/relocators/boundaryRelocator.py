@@ -131,11 +131,11 @@ class BoundaryRelocator(object):
         self.node_activities[source] -= activity
         self.node_activities[destination] += activity
 
-    def getRelocations(self, GVT, activities, horizon):
+    def getRelocations(self, gvt, activities, horizon):
         """
         Return all pending relocations
 
-        :param GVT: current GVT
+        :param gvt: current GVT
         :param activities: activities being passed on the GVT ring
         :param horizon: the activity horizon
         :returns: all relocations that should be executed

@@ -67,7 +67,7 @@ class Controller(BaseSimulator):
         """
         Notify this simulation kernel that the GVT calculation is finished
         """
-        self.wait_for_GVT.set()
+        self.wait_for_gvt.set()
 
     def isFinished(self, running):
         """
@@ -113,24 +113,24 @@ class Controller(BaseSimulator):
             if self.isFinished(running):
                 # All simulation kernels have told us that they are idle at the moment
                 break
-        self.run_GVT = False
-        self.event_GVT.set()
-        self.GVT_thread.join()
+        self.run_gvt = False
+        self.event_gvt.set()
+        self.gvt_thread.join()
 
-    def startGVTThread(self, GVT_interval):
+    def startGVTThread(self, gvt_interval):
         """
         Start the GVT thread
 
-        :param GVT_interval: the interval between two successive GVT runs
+        :param gvt_interval: the interval between two successive GVT runs
         """
         # We seem to be the controller
         # Start up the GVT algorithm then
-        self.event_GVT = threading.Event()
-        self.run_GVT = True
-        self.GVT_thread = threading.Thread(target=Controller.thread_GVT,
-                                          args=[self, GVT_interval])
-        self.GVT_thread.daemon = True
-        self.GVT_thread.start()
+        self.event_gvt = threading.Event()
+        self.run_gvt = True
+        self.gvt_thread = threading.Thread(target=Controller.threadGVT,
+                                          args=[self, gvt_interval])
+        self.gvt_thread.daemon = True
+        self.gvt_thread.start()
 
     def threadGVT(self, freq):
         """
@@ -140,20 +140,19 @@ class Controller(BaseSimulator):
         :param freq: the time to sleep between two GVT calculations
         """
         # Wait for the simulation to have done something useful before we start
-        self.event_GVT.wait(freq)
+        self.event_gvt.wait(freq)
         # Maybe simulation already finished...
-        while self.run_GVT:
-            #print("ACCUMULATOR: " + str(self.accumulator))
+        while self.run_gvt:
             self.receiveControl([float('inf'), 
                                  float('inf'), 
                                  self.accumulator, 
                                  {}], 
                                 True)
             # Wait until the lock is released elsewhere
-            self.wait_for_GVT.wait()
-            self.wait_for_GVT.clear()
+            self.wait_for_gvt.wait()
+            self.wait_for_gvt.clear()
             # Limit the GVT algorithm, otherwise this will flood the ring
-            self.event_GVT.wait(freq)
+            self.event_gvt.wait(freq)
 
     def getVCDVariables(self):
         """
@@ -316,16 +315,16 @@ class Controller(BaseSimulator):
         self.termination_condition = termination_condition
         self.termination_time_check = False
 
-    def findAndPerformRelocations(self, GVT, activities, horizon):
+    def findAndPerformRelocations(self, gvt, activities, horizon):
         """
         First requests the relocator for relocations to perform, and afterwards actually perform them.
 
-        :param GVT: the current GVT
+        :param gvt: the current GVT
         :param activities: list containing all activities of all nodes
         :param horizon: the horizon used in this activity tracking
         """
         # Now start moving all models according to the provided relocation directives
-        relocate = self.relocator.getRelocations(GVT, activities, horizon)
+        relocate = self.relocator.getRelocations(gvt, activities, horizon)
         #print("Filtered relocate: " + str(relocate))
 
         if relocate:
@@ -350,7 +349,7 @@ class Controller(BaseSimulator):
             self.running_irreversible = None
 
         while not self.no_finish_ring.acquire(False):
-            if not self.run_GVT:
+            if not self.run_gvt:
                 self.GVTdone()
                 return
             time.sleep(0)
@@ -395,7 +394,7 @@ class Controller(BaseSimulator):
         self.checkForTemporaryIrreversible()
 
         # Allow the finishring algorithm again
-        self.no_finishRing.release()
+        self.no_finish_ring.release()
 
     def checkForTemporaryIrreversible(self):
         """

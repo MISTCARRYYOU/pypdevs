@@ -23,10 +23,10 @@ class TestActions(unittest.TestCase):
         self.sim = basicSim()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def test_actions_delayed_action_normal(self):
-        self.sim.GVT = 0
+        self.sim.gvt = 0
         plist = []
         plist.append([(1, 1), "model1", "ABC"])
         plist.append([(2, 1), "model3", "ABC"])
@@ -41,7 +41,7 @@ class TestActions(unittest.TestCase):
         self.assertTrue(self.sim.actions == plist)
 
     def test_actions_text_revertion(self):
-        self.sim.GVT = 1
+        self.sim.gvt = 1
         plist = []
         plist.append([(1, 1), "model1", "ABC"])
         plist.append([(2, 1), "model3", "ABC"])
@@ -53,7 +53,7 @@ class TestActions(unittest.TestCase):
         # Messages should not be sorted in the toPrint list
         rlist = []
         for i in plist:
-            if i[0][0] < self.sim.GVT:
+            if i[0][0] < self.sim.gvt:
                 try:
                     self.sim.delayedAction(i[0], i[1], i[2])
                     # Should throw an exception
@@ -69,7 +69,7 @@ class TestActions(unittest.TestCase):
         self.assertTrue(self.sim.actions == rlist)
 
     def test_actions_perform(self):
-        self.sim.GVT = 0
+        self.sim.gvt = 0
         plist = []
         # Should not need to be added in correct order!
         # Those that should not be executed contain faulty code 
@@ -108,7 +108,7 @@ class TestActions(unittest.TestCase):
             pass
 
     def test_actions_remove_revert(self):
-        self.sim.GVT = 5
+        self.sim.gvt = 5
         plist = []
         # Should not need to be added in correct order!
         plist.append([(0, 0), "model1", "ABC"])
@@ -154,7 +154,7 @@ class TestActions(unittest.TestCase):
             pass
         self.assertTrue(self.sim.actions == clist)
     def test_actions_remove_normal(self):
-        self.sim.GVT = 0
+        self.sim.gvt = 0
         plist = []
         # Should not need to be added in correct order!
         plist.append([(0, 0), "model1", "ABC"])

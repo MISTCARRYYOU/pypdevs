@@ -86,28 +86,28 @@ def loadCheckpoint(name):
     if len(files) == 0:
         return
     #assert debug("Got matching files: " + str(files))
-    max_GVT = 0
+    max_gvt = 0
     nodes = middleware.COMM_WORLD.Get_size()
     noncomplete_checkpoint = True
     found_files = {}
-    found_GVTs = []
+    found_gvts = []
     for f in files:
         gvt = float(f.split('_')[-2])
         if gvt in found_files:
             found_files[gvt].append(f)
         else:
             found_files[gvt] = [f]
-            found_GVTs.append(gvt)
-    found_GVTs.sort()
+            found_gvts.append(gvt)
+    found_gvts.sort()
     gvt = 0
     # Construct a temporary server
     from pypdevs.middleware import COMM_WORLD
     server = Server(middleware.COMM_WORLD.Get_rank(), 
                     middleware.COMM_WORLD.Get_size())
-    while len(found_GVTs) > 0:
-        gvt = found_GVTs[-1]
+    while len(found_gvts) > 0:
+        gvt = found_gvts[-1]
         if len(found_files[gvt]) < nodes:
-            found_GVTs.pop()
+            found_gvts.pop()
             gvt = 0
         else:
             if gvt == 0:
@@ -115,7 +115,7 @@ def loadCheckpoint(name):
             for rank in range(server.size):
                 if not server.getProxy(rank).checkLoadCheckpoint(name, gvt):
                     # One of the proxies denied, try next
-                    found_GVTs.pop()
+                    found_gvts.pop()
                     gvt = 0
                     break
             if gvt != 0:
@@ -163,7 +163,7 @@ class Simulator(object):
             was_main = True
         # Initialize all options
         self.init_done = False
-        self.run_GVT = True
+        self.run_gvt = True
         self.callbacks = []
         self.termination_models = set()
         self.fetch_all = False
@@ -180,7 +180,7 @@ class Simulator(object):
         self.loglevel = logging.DEBUG
         self.checkpoint_interval = -1
         self.checkpoint_name = "(none)"
-        self.GVT_interval = 1
+        self.gvt_interval = 1
         self.state_saving = 2
         self.msg_copy = 0
         self.realtime = False
@@ -723,13 +723,13 @@ class Simulator(object):
             if len(locations) == 1:
                 if self.checkpoint_interval > 0:
                     # If we use checkpointing, we will need a GVT thread running
-                    self.controller.startGVTThread(self.GVT_interval)
+                    self.controller.startGVTThread(self.gvt_interval)
                 # Simply do a blocking call, thus preventing the finish ring algorithm
                 #begin = time.time()
                 self.controller.getProxy(locations[0]).simulate_sync()
                 #print(time.time() - begin)
             else:
-                self.controller.startGVTThread(self.GVT_interval)
+                self.controller.startGVTThread(self.gvt_interval)
                 for location in locations:
                     # Don't run all of these on a seperate thread, as it returns no result
                     self.controller.getProxy(location).simulate()

@@ -38,7 +38,7 @@ class TestGVT(unittest.TestCase):
         self.sim = basicSim()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def test_GVT_notify_receive(self):
         self.assertTrue(self.sim.V == [{}, {}, {}, {}])
@@ -119,16 +119,16 @@ class TestGVT(unittest.TestCase):
         self.assertTrue(self.sim.Tmin == 5)
 
     def test_setGVT(self):
-        self.sim.GVT = 0
+        self.sim.gvt = 0
         models = [Generator()]
         from pypdevs.statesavers import CopyState
         models[0].old_states = [CopyState((0, 1), (2, 1), None, 0, {}, 0), CopyState((2, 1), (6, 1), None, 0, {}, 0)]
         self.sim.model = StubRootDEVS(models, 0)
         # Prevent a loop
         self.sim.next_LP = self.sim
-        self.assertTrue(self.sim.GVT == 0)
+        self.assertTrue(self.sim.gvt == 0)
         self.sim.setGVT(5, [], False)
-        self.assertTrue(self.sim.GVT == 5)
+        self.assertTrue(self.sim.gvt == 5)
         # Try to set to a time before the current GVT
         try:
             self.sim.setGVT(1, [], False)
@@ -136,4 +136,4 @@ class TestGVT(unittest.TestCase):
         except DEVSException:
             pass
         # GVT shouldn't have changed
-        self.assertTrue(self.sim.GVT == 5)
+        self.assertTrue(self.sim.gvt == 5)

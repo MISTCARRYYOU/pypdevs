@@ -33,18 +33,18 @@ class ManualRelocator(object):
         """
         pass
 
-    def getRelocations(self, GVT, activities, horizon):
+    def getRelocations(self, gvt, activities, horizon):
         """
         Fetch the relocations that are pending for the current GVT
 
-        :param GVT: current GVT
+        :param gvt: current GVT
         :param activities: the activities being passed on the GVT ring
         :param horizon: the activity horizon that was used
         :returns: dictionary containing all relocations
         """
         relocate = {}
         for index, directive in enumerate(self.directives):
-            if directive[0] < GVT:
+            if directive[0] < gvt:
                 relocate[directive[1]] = directive[2]
             else:
                 self.directives = self.directives[index:]

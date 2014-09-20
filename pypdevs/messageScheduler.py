@@ -42,7 +42,7 @@ class MessageScheduler(object):
         For pickling
         """
         retdict = {}
-        unpicklable = frozenset("instancemethod", "lock", "_Event")
+        unpicklable = frozenset(["instancemethod", "lock", "_Event"])
         for i in dir(self):
             if getattr(self, i).__class__.__name__ in unpicklable:
                 # unpicklable, so don't copy it

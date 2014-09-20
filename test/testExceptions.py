@@ -24,7 +24,7 @@ class TestExceptions(unittest.TestCase):
         self.sim = basicSim()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def test_DEVS_model_exceptions(self):
         try:

@@ -22,7 +22,7 @@ class TestExternalInput(unittest.TestCase):
         self.msg = basicMsg()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def test_externalInput_antimsg_unpresent(self):
         # Send a non-present anti message

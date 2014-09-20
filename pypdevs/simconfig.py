@@ -115,7 +115,7 @@ class SimulatorConfiguration(object):
             raise DEVSException("Relocation directive got an unknown destination, got: %s, expected one of %s" % (destination, range(self.simulator.server.size)))
 
         from pypdevs.relocators.manualRelocator import ManualRelocator
-        if not isinstance(self.simulator.activityRelocator, ManualRelocator):
+        if not isinstance(self.simulator.activity_relocator, ManualRelocator):
             raise DEVSException("Relocation directives can only be set when using a manual relocator (the default)\nYou seem to have changed the relocator, so please revert it back by calling the 'setManualRelocator()' first!")
 
         if isinstance(model, int):
@@ -458,7 +458,7 @@ class SimulatorConfiguration(object):
             raise DEVSException("GVT interval should be an integer or a float")
         if gvt_int < 1:
             raise DEVSException("GVT interval should be larger than or equal to one")
-        self.simulator.GVT_interval = gvt_int
+        self.simulator.gvt_interval = gvt_int
 
     def setCheckpointing(self, name, checkpoint_interval):
         """

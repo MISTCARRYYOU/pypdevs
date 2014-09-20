@@ -35,7 +35,7 @@ def visualizeLocations(kernel):
                 locationMap[model.x][model.y] = kernel.name
         except AttributeError:
             pass
-    visualizeMatrix(location_map, "%i", "locations-%f" % max(0, kernel.GVT))
+    visualizeMatrix(location_map, "%i", "locations-%f" % max(0, kernel.gvt))
 
 def visualizeActivity(sim):
     """

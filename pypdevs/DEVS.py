@@ -234,12 +234,12 @@ class AtomicDEVS(BaseDEVS):
                 accumulator += state.activity
         activities[self.model_id] = accumulator
         
-    def setGVT(self, GVT, activities, last_state_only):
+    def setGVT(self, gvt, activities, last_state_only):
         """
         Set the GVT of the model, cleaning up the states vector as required
         for the time warp algorithm
 
-        :param GVT: the new value of the GVT
+        :param gvt: the new value of the GVT
         :param activities: dictionary containing all activities for the models
         :param last_state_only: whether or not to only use a single state for activity
         """
@@ -247,7 +247,7 @@ class AtomicDEVS(BaseDEVS):
         activity = 0
         for i in range(len(self.old_states)):
             state = self.old_states[i]
-            if state.time_last[0] >= GVT:
+            if state.time_last[0] >= gvt:
                 # Possible that all elements should be kept, 
                 # in which case it will return -1 and only keep the last element
                 # So the copy element should be AT LEAST 0
@@ -286,8 +286,8 @@ class AtomicDEVS(BaseDEVS):
         self.state = state.loadState()
         if memorize:
             # Reverse it too
-            self.memo = self.old_states[:-len(self.old_states) + newstate - 1:-1]
-        self.old_states = self.old_states[:newstate + 1]
+            self.memo = self.old_states[:-len(self.old_states) + new_state - 1:-1]
+        self.old_states = self.old_states[:new_state + 1]
 
         # Check if one of the reverted states was ever read for the termination condition
         if self.last_read_time > time:
@@ -750,16 +750,16 @@ class RootDEVS(BaseDEVS):
         else:
             raise DEVSException("Unknown Scheduler: " + str(scheduler_type))
 
-    def setGVT(self, GVT, activities, last_state_only):
+    def setGVT(self, gvt, activities, last_state_only):
         """
         Sets the GVT of this coupled model
 
-        :param GVT: the time to which the GVT should be set
+        :param gvt: the time to which the GVT should be set
         :param activities: dictionary containing all activities for the models
         :param last_state_only: whether or not to use the last state for activity
         """
         for i in self.component_set:
-            i.setGVT(GVT, activities, last_state_only)
+            i.setGVT(gvt, activities, last_state_only)
 
     def fetchActivity(self, time, activities):
         """

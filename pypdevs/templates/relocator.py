@@ -33,11 +33,11 @@ class MyRelocator(object):
         """
         pass
 
-    def getRelocations(self, GVT, activities, horizon):
+    def getRelocations(self, gvt, activities, horizon):
         """
         Fetch the relocations that are pending for the current GVT
 
-        :param GVT: current GVT
+        :param gvt: current GVT
         :param activities: the activities being passed on the GVT ring
         :returns: dictionary containing all relocations
         """

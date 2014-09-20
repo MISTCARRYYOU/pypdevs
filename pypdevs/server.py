@@ -274,7 +274,7 @@ class Server(object):
         with sim.simlock:
             # Shut down all threads on the topmost simulator
             sim.finished = True
-            sim.shouldrun.set()
+            sim.should_run.set()
             self.finishWaitingPool()
 
             # Wait until they are done

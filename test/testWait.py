@@ -21,7 +21,7 @@ class TestWait(unittest.TestCase):
         self.sim = basicSim()
 
     def tearDown(self):
-        self.sim.runGVT = False
+        self.sim.run_gvt = False
 
     def checkWait(self, finish):
         self.checkWaitStart()
