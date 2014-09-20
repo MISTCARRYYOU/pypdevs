@@ -8,8 +8,8 @@ import models
 import sys
 from pypdevs.simulator import Simulator, loadCheckpoint
 
-import stacktracer
-stacktracer.trace_start("trace.html",interval=1,auto=True) # Set auto flag to always update file!
+#import stacktracer
+#stacktracer.trace_start("trace.html",interval=1,auto=True) # Set auto flag to always update file!
 
 mn = sys.argv[1]
 args = {}

@@ -123,6 +123,9 @@ class BaseSimulator(Solver):
                                 "inqueue",
                                 "actions",
                                 "server",
+                                "msg_sent",
+                                "msg_recv",
+                                "control_msg",
                                 "transitioning",
                                 "Vchange",
                                 "V"])
