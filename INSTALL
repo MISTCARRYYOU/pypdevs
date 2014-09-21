@@ -1,0 +1,62 @@
+##############################################################################
+#  Copyright 2014 Modelling, Simulation and Design Lab (MSDL) at               
+#  McGill University and the University of Antwerp (http://msdl.cs.mcgill.ca/)
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+##############################################################################
+
+==============================================================================
+     General guidelines:
+==============================================================================
+This project structure mostly follows the guidelines presented at
+http://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/
+With the difference that CMake is used.
+
+==============================================================================
+     Directory layout:
+==============================================================================
+The following directories are present at the root level:
+  - docs: contains all documentation source code, to be parsed by Sphinx.
+  - examples: contains several examples of a traffic light in different 
+    formalisms and with different simulation options.
+  - performance: contains 2 small performance benchmarks, one for a specific
+    DEVStone setup and another for firespread.
+  - pypdevs: the source code.
+  - test: contains the tests.
+
+Several files are present here too:
+  - features.txt: a list of most features that are supported, together with
+    a list of features that should not be ported to C++.
+  - INSTALL: this file.
+  - install_mpi4py.sh: a script to install MPICH3 and mpi4py.
+  - install_sphinx.sh: a script to install Sphinx.
+  - LICENSE: the used copyright license.
+  - NOTICE: the copyright notice that is present in every file.
+  - notes.txt: release notes.
+  - README.md: general introduction about the project.
+  - setup.py.in: the Python setuptools template to be used by CMake.
+
+==============================================================================
+     Building the documentation:
+==============================================================================
+The most extensive resource is the enclosed documentation. This can be build
+by executing the following commands:
+  
+   ./install_sphinx.sh
+   mkdir build
+   cd build
+   cmake ..
+   make
+
+The documentation can now be found under build/docs/html/index.html
+Further installation guidelines and examples are presented there.
