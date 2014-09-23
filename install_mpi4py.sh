@@ -11,7 +11,7 @@ wget http://www.mpich.org/static/downloads/3.1.2/mpich-3.1.2.tar.gz
 tar -xvzf mpich-3.1.2.tar.gz
 cd mpich-3.1.2
 ./configure --prefix=$base/mpich --with-device=ch3:sock --disable-fortran
-make
+make -j5
 make install
 export PATH=$base/mpich/bin:$PATH
 cd ../..
@@ -20,7 +20,17 @@ cd mpi4py
 wget https://pypi.python.org/packages/source/m/mpi4py/mpi4py-1.3.1.tar.gz
 tar -xvzf mpi4py-1.3.1.tar.gz
 cd mpi4py-1.3.1
-python setup.py build --mpicc=../../mpich/bin/mpicc
+# Force the correct MPI distribution
+rm mpi.cfg || true
+echo "[mpi]" >> mpi.cfg
+echo "" >> mpi.cfg
+echo "include_dirs = $base/mpich/include" >> mpi.cfg
+echo "libraries = mpi" >> mpi.cfg
+echo "library_dirs = $base/mpich/lib" >> mpi.cfg
+echo "runtime_library_dirs = $base/mpich/lib" >> mpi.cfg
+echo "mpicc = $base/mpich/bin/mpicc" >> mpi.cfg
+echo "mpicxx = $base/mpich/bin/mpicxx" >> mpi.cfg
+python setup.py build --mpi=mpi
 python setup.py install --user
 
 echo "=============================="
