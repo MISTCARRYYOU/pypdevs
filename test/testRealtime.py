@@ -18,6 +18,9 @@ import subprocess
 import filecmp
 import datetime
 
+class NoDisplayError(Exception):
+    pass
+
 class TestRealtime(unittest.TestCase):
     def setUp(self):
         setLogger('None', ('localhost', 514), logging.WARN)
@@ -29,7 +32,10 @@ class TestRealtime(unittest.TestCase):
         self.assertTrue(runRealtime("realtime_thread", 35))
 
     def test_local_realtime_tk(self):
-        self.assertTrue(runRealtime("realtime_tk", 35))
+        try:
+            self.assertTrue(runRealtime("realtime_tk", 35))
+        except NoDisplayError:
+            self.skipTest("No display detected, so can't run the Tk tests")
 
     def test_local_realtime_loop(self):
         self.assertTrue(runRealtime("realtime_loop", 35))
@@ -38,7 +44,10 @@ class TestRealtime(unittest.TestCase):
         self.assertTrue(runRealtime("realtime_thread_2.0", 70))
 
     def test_local_realtime_tk_upscale(self):
-        self.assertTrue(runRealtime("realtime_tk_2.0", 70))
+        try:
+            self.assertTrue(runRealtime("realtime_tk_2.0", 70))
+        except NoDisplayError:
+            self.skipTest("No display detected, so can't run the Tk tests")
 
     def test_local_realtime_loop_upscale(self):
         self.assertTrue(runRealtime("realtime_loop_2.0", 70))
@@ -47,7 +56,10 @@ class TestRealtime(unittest.TestCase):
         self.assertTrue(runRealtime("realtime_thread_0.5", 17))
 
     def test_local_realtime_tk_downscale(self):
-        self.assertTrue(runRealtime("realtime_tk_0.5", 17))
+        try:
+            self.assertTrue(runRealtime("realtime_tk_0.5", 17))
+        except NoDisplayError:
+            self.skipTest("No display detected, so can't run the Tk tests")
 
     def test_local_realtime_loop_downscale(self):
         self.assertTrue(runRealtime("realtime_loop_0.5", 17))
@@ -88,6 +100,10 @@ def runRealtime(name, reqtime):
         return True
 
 def runLocal(name):
+    if "tk" in name:
+        import os
+        if "DISPLAY" not in os.environ:
+            raise NoDisplayError()
     outfile = "output/" + str(name)
     removeFile(outfile)
     import subprocess
