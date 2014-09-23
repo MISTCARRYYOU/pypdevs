@@ -82,7 +82,7 @@ def runRealtime(name, reqtime):
             # It seems that the difference wasn't that big after all, just continue
     # Seems to be done, check for time passed
     diff = after - before
-    if not (reqtime - 1 <= diff.seconds <= reqtime + 1):
+    if not (reqtime - 3 <= diff.seconds <= reqtime + 3):
         raise Exception("Total runtime was not as expected. Expected: " + str(reqtime) + "s, but got: " + str(diff.seconds) + "s")
     else:
         return True
