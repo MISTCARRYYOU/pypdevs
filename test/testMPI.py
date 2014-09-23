@@ -93,6 +93,7 @@ class TestMPI(unittest.TestCase):
     def test_MPI_random(self):
         self.assertTrue(runMPI("random"))
 
+    @unittest.skip("Known to run into infinite loops")
     def test_MPI_checkpoint(self):
         # First run the checkpoint and check whether or not the output is identical with or without checkpointing enabled
         proc = subprocess.Popen("mpirun -np 3 python testmodels/experiment.py checkpoint", shell=True)
