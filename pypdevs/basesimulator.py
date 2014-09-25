@@ -125,6 +125,9 @@ class BaseSimulator(Solver):
                                 "server",
                                 "msg_sent",
                                 "msg_recv",
+                                "send_msg_counter",
+                                "output_queue",
+                                "accumulator",
                                 "control_msg",
                                 "transitioning",
                                 "Vchange",
@@ -175,6 +178,8 @@ class BaseSimulator(Solver):
         self.Tmin = float('inf')
         self.control_msg = None
         self.gvt = -float('inf')
+        self.accumulator = defaultdict(int)
+        self.send_msg_counter = 0
 
         self.prevtime = (0, 0)
         self.clock = (-float('inf'), 0)
@@ -486,7 +491,7 @@ class BaseSimulator(Solver):
                 from math import floor
                 gvt = floor(min(m_clock, m_send))
                 if gvt < self.gvt:
-                    raise DEVSException("VT is decreasing")
+                    raise DEVSException("GVT is decreasing")
                 self.accumulator = waiting_vector
                 use_last_state = self.relocator.useLastStateOnly()
                 self.getProxy(self.name).setGVT(gvt, 
