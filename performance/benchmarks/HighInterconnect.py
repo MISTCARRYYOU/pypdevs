@@ -15,6 +15,7 @@
 
 import sys
 from pypdevs.DEVS import AtomicDEVS, CoupledDEVS
+from pypdevs.simulator import Simulator
 
 inf = float('inf')
 seed = 1
@@ -70,7 +71,6 @@ if __name__ == "__main__":
     global is_random
     is_random = (sys.argv[2][0] == "1")
     m = HighInterconnect(int(sys.argv[1]))
-    from pypdevs.schedulers.schedulerChibiList import SchedulerChibiList as Sched
-    sim = Simulator(m, Sched)
+    sim = Simulator(m)
     sim.setTerminationTime(500.0)
     sim.simulate()
