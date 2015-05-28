@@ -77,11 +77,10 @@ PHOLD (remote fraction): results_PHOLD_remotes.eps
 from pypdevs.simulator import Simulator
 
 ### Queue
-import Queue
-from Queue import Queue as QueueModel
+import QueueModel
 
-Queue.is_random = True
-m = QueueModel(10)
+QueueModel.is_random = True
+m = QueueModel.Queue(10)
 sim = Simulator(m)
 sim.setTerminationTime(1)
 sim.simulate()
