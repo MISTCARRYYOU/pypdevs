@@ -18,16 +18,15 @@ from pypdevs.DEVS import AtomicDEVS, CoupledDEVS
 from pypdevs.simulator import Simulator
 
 inf = float('inf')
-seed = 1
 
-def getRandom():
+def getRandom(seed):
     if is_random:
-        global seed
+        # Compute a new seed
         seed = (1664525 * seed + 1013904223) % 4294967296
         v = float(int(float(seed)/4294967296 * 1000)) / 1000
-        return v
+        return v, seed
     else:
-        return 1.0
+        return 1.0, seed
 
 class Event:
         def __init__(self, eventSize):
@@ -37,20 +36,23 @@ class Event:
             return Event(self.eventSize)
 
 class Generator(AtomicDEVS):
-        def __init__(self):
+        def __init__(self, seed):
                 AtomicDEVS.__init__(self, "Generator")
-                self.state = getRandom()
+                # State is now a tuple of the time to wait, and the seed to use next
+                self.state = getRandom(seed)
                 self.send_event = self.addOutPort("out_event")
                 self.recv_event = self.addInPort("in_event")
                 
         def timeAdvance(self):
-                return self.state
+                return self.state[0]
 
         def extTransition(self, inputs):
-                return self.state - self.elapsed
+                # Decrease the time, but keep the seed the same
+                return (self.state[0] - self.elapsed, self.state[1])
 
         def intTransition(self):
-                return getRandom()
+                # Get a new time to wait, but also a new seed
+                return getRandom(self.state[1])
 
         def outputFnc(self):
                 return {self.send_event: [Event(1)]}
@@ -59,8 +61,10 @@ class HighInterconnect(CoupledDEVS):
         def __init__(self, width):
                 CoupledDEVS.__init__(self, "HighInterconnect")
                 l = []
+                # Give each generator a different seed to start with, otherwise it wouldn't be random
+                seeds = [i * 1000 for i in range(width)]
                 for i in range(width):
-                    l.append(self.addSubModel(Generator()))
+                    l.append(self.addSubModel(Generator(seeds[i])))
                 for i in l:
                     for j in l:
                         if i != j:

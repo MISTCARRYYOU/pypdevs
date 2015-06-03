@@ -15,17 +15,17 @@
 
 import sys
 from pypdevs.DEVS import AtomicDEVS, CoupledDEVS
+from pypdevs.simulator import Simulator
 
 inf = float('inf')
-seed = 1
 
-def getRandom():
+def getRandom(seed):
     if is_random:
-        global seed
         seed = (1664525 * seed + 1013904223) % 4294967296
-        return float(int(float(seed)/4294967296 * 1000)) / 1000
+        v = float(int(float(seed)/4294967296 * 1000)) / 1000
+        return v, seed
     else:
-        return 1.0
+        return 1.0, seed
 
 class Event:
         def __init__(self, eventSize):
@@ -35,17 +35,18 @@ class Event:
             return Event(self.eventSize)
 
 class ProcessorState:
-        def __init__(self):
+        def __init__(self, seed):
                 self.event1_counter = inf
                 self.event1 = None
                 self.queue = []
+                self.seed = seed
 
 class Processor(AtomicDEVS):
-        def __init__(self, name):
+        def __init__(self, name, seed):
                 AtomicDEVS.__init__(self, name)
                 self.recv_event1 = self.addInPort("in_event1")
                 self.send_event1 = self.addOutPort("out_event1")
-                self.state = ProcessorState()
+                self.state = ProcessorState(seed)
                 
         def timeAdvance(self):
                 return self.state.event1_counter
@@ -56,7 +57,7 @@ class Processor(AtomicDEVS):
                     self.state.event1_counter = inf
                     self.state.event1 = None
                 else:
-                    self.state.event1_counter = getRandom()
+                    self.state.event1_counter, self.state.seed = getRandom(self.state.seed)
                     self.state.event1 = self.state.queue.pop()
                 return self.state
 
@@ -65,7 +66,7 @@ class Processor(AtomicDEVS):
                 for ev in inputs[self.recv_event1]:
                     if self.state.event1 is None:
                         self.state.event1 = ev
-                        self.state.event1_counter = getRandom()
+                        self.state.event1_counter, self.state.seed = getRandom(self.state.seed)
                     else:
                         self.state.queue.append(ev)
                 return self.state
@@ -93,7 +94,17 @@ class Queue(CoupledDEVS):
                 CoupledDEVS.__init__(self, "Queue")
                 self.generator = self.addSubModel(Generator())
                 prev = self.generator
+                seeds = [i * 1000 for i in range(width)]
                 for i in range(width):
-                    m = self.addSubModel(Processor("Processor%i" % i))
+                    m = self.addSubModel(Processor("Processor%i" % i, seeds[i]))
                     self.connectPorts(prev.send_event1, m.recv_event1)
                     prev = m
+
+if __name__ == "__main__":
+    import sys
+    global is_random
+    is_random = (sys.argv[2][0] == "1")
+    m = Queue(int(sys.argv[1]))
+    sim = Simulator(m)
+    sim.setTerminationTime(500.0)
+    sim.simulate()
