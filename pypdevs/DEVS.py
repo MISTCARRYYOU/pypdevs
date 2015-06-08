@@ -256,7 +256,7 @@ class AtomicDEVS(BaseDEVS):
             elif not last_state_only:
                 activity += state.activity
         if self.old_states == []:
-            raise DEVSException("Model has no memory of the past!")
+            self.old_states = []
         elif copy is None:
             self.old_states = [self.old_states[-1]]
         else:
